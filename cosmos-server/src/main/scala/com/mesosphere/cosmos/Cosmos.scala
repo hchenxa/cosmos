@@ -12,8 +12,11 @@ import io.circe.syntax.EncoderOps
 import io.finch._
 import io.finch.circe._
 import io.github.benwhitehead.finch.FinchServer
+import org.apache.curator.framework.api.ACLProvider
 import org.apache.curator.framework.CuratorFrameworkFactory
 import org.apache.curator.retry.ExponentialBackoffRetry
+import org.apache.zookeeper.ZooDefs
+import org.apache.zookeeper.data.{ACL, Id}
 import com.mesosphere.cosmos.circe.Decoders._
 import com.mesosphere.cosmos.circe.Encoders._
 import com.mesosphere.cosmos.handler._
@@ -258,6 +261,7 @@ object Cosmos extends FinchServer {
         .namespace(zkUri.path.stripPrefix("/"))
         .connectString(zkUri.connectString)
         .retryPolicy(zkRetryPolicy)
+        .aclProvider(DigestACL(Some("ok,", "there")))
         .build
 
       // Start the client and close it on exit
@@ -298,4 +302,22 @@ object Cosmos extends FinchServer {
     )(statsReceiver)
   }
 
+}
+
+private[cosmos] final case class DigestACL(userSecret: Option[(String, String)]) extends ACLProvider {
+  var acls = new java.util.ArrayList[ACL]()
+  userSecret.foreach {
+    case (user, secret) => {
+      val id = new Id("digest", s"$user:$secret")
+      val acl = new ACL(ZooDefs.Perms.ALL, id)
+      acls.add(acl)
+    }
+  }
+
+  def getAclForPath(path: String): java.util.List[ACL] = {
+    acls
+  }
+  def getDefaultAcl(): java.util.List[ACL] = {
+    acls
+  }
 }
