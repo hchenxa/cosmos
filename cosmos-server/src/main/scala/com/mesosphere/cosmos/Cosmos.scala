@@ -36,47 +36,47 @@ private[cosmos] final class Cosmos(
   lazy val logger = org.slf4j.LoggerFactory.getLogger(classOf[Cosmos])
 
   val packageInstall: Endpoint[Json] = {
-    post("package" / "install" ? packageInstallHandler.reader)(packageInstallHandler.respond _)
+    packageInstallHandler.route(reader => post("package" / "install" ? reader))
   }
 
   val packageUninstall: Endpoint[Json] = {
-    post("package" / "uninstall" ? uninstallHandler.reader)(uninstallHandler.respond _)
+    uninstallHandler.route(reader => post("package" / "uninstall" ? reader))
   }
 
   val packageDescribe: Endpoint[Json] = {
-    post("package" / "describe" ? packageDescribeHandler.reader) (packageDescribeHandler.respond _)
+    packageDescribeHandler.route(reader => post("package" / "describe" ? reader))
   }
 
   val packageRender: Endpoint[Json] = {
-    post("package" / "render" ? packageRenderHandler.reader)(packageRenderHandler.respond _)
+    packageRenderHandler.route(reader => post("package" / "render" ? reader))
   }
 
   val packageListVersions: Endpoint[Json] = {
-    post("package" / "list-versions" ? packageListVersionsHandler.reader) (packageListVersionsHandler.respond _)
+    packageListVersionsHandler.route(reader => post("package" / "list-versions" ? reader))
   }
 
   val packageSearch: Endpoint[Json] = {
-    post("package" / "search" ? packageSearchHandler.reader) (packageSearchHandler.respond _)
+    packageSearchHandler.route(reader => post("package" / "search" ? reader))
   }
 
   val packageList: Endpoint[Json] = {
-    post("package" / "list" ? listHandler.reader)(listHandler.respond _)
+    listHandler.route(reader => post("package" / "list" ? reader))
   }
 
   val capabilities: Endpoint[Json] = {
-    get("capabilities" ? capabilitiesHandler.reader)(capabilitiesHandler.respond _)
+    capabilitiesHandler.route(reader => get("capabilities" ? reader))
   }
 
   val packageListSources: Endpoint[Json] = {
-    post("package" / "repository"/ "list" ? listRepositoryHandler.reader)(listRepositoryHandler.respond _)
+    listRepositoryHandler.route(reader => post("package" / "repository"/ "list" ? reader))
   }
 
   val packageAddSource: Endpoint[Json] = {
-    post("package" / "repository" / "add" ? addRepositoryHandler.reader)(addRepositoryHandler.respond _)
+    addRepositoryHandler.route(reader => post("package" / "repository" / "add" ? reader))
   }
 
   val packageDeleteSource: Endpoint[Json] = {
-    post("package" / "repository" / "delete" ? deleteRepositoryHandler.reader)(deleteRepositoryHandler.respond _)
+    deleteRepositoryHandler.route(reader => post("package" / "repository" / "delete" ? reader))
   }
 
   val service: Service[Request, Response] = {

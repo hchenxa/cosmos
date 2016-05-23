@@ -19,6 +19,12 @@ private[cosmos] abstract class EndpointHandler[Request, Response](
   responseClassTag: ClassTag[Response]
 ) {
 
+  private[cosmos] def route(
+    routingFn: RequestReader[(RequestSession, Request)] => Endpoint[(RequestSession, Request)]
+  ): Endpoint[Json] = {
+    routingFn(reader)(respond _)
+  }
+
   val reader: RequestReader[(RequestSession, Request)] = for {
     accept <- header("Accept").as[MediaType].should(beTheExpectedType(produces))
     contentType <- header("Content-Type").as[MediaType].should(beTheExpectedType(accepts))
