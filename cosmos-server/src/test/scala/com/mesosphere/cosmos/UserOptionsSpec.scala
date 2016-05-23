@@ -1,8 +1,8 @@
 package com.mesosphere.cosmos
 
 import cats.data.Xor
-import com.mesosphere.cosmos.handler._
 import com.mesosphere.cosmos.circe.Decoders._
+import com.mesosphere.cosmos.handler._
 import com.mesosphere.cosmos.http.{MediaTypes, RequestSession}
 import com.mesosphere.cosmos.model._
 import com.mesosphere.cosmos.model.thirdparty.marathon.MarathonApp
@@ -12,8 +12,10 @@ import com.twitter.finagle.http.RequestBuilder
 import com.twitter.io.Buf
 import com.twitter.util.{Await, Future}
 import io.circe.syntax._
-import io.circe.{Json, JsonObject}
-import io.finch.Input
+import io.circe.{Encoder, Json, JsonObject}
+import io.finch.{DecodeRequest, Input}
+
+import scala.reflect.ClassTag
 
 final class UserOptionsSpec extends UnitSpec {
 
@@ -56,18 +58,18 @@ final class UserOptionsSpec extends UnitSpec {
         import com.mesosphere.cosmos.test.TestUtil.Anonymous
         import io.finch.circe._
         val cosmos = new Cosmos(
-          EndpointHandler.const(UninstallResponse(Nil)),
+          constHandler(UninstallResponse(Nil)),
           new PackageInstallHandler(packageCache, packageRunner),
           new PackageRenderHandler(packageCache),
-          EndpointHandler.const(SearchResponse(List.empty)),
-          EndpointHandler.const(
+          constHandler(SearchResponse(List.empty)),
+          constHandler(
             DescribeResponse(packageFiles.packageJson, packageFiles.marathonJsonMustache)
           ),
-          EndpointHandler.const(ListVersionsResponse(Map.empty)),
-          EndpointHandler.const(ListResponse(Nil)),
-          EndpointHandler.const(PackageRepositoryListResponse(Nil)),
-          EndpointHandler.const(PackageRepositoryAddResponse(Nil)),
-          EndpointHandler.const(PackageRepositoryDeleteResponse(Nil)),
+          constHandler(ListVersionsResponse(Map.empty)),
+          constHandler(ListResponse(Nil)),
+          constHandler(PackageRepositoryListResponse(Nil)),
+          constHandler(PackageRepositoryAddResponse(Nil)),
+          constHandler(PackageRepositoryDeleteResponse(Nil)),
           CapabilitiesHandler()
         )
         val request = RequestBuilder()
@@ -182,6 +184,23 @@ final class UserOptionsSpec extends UnitSpec {
     (parameters + (("id", "\"options-test\"")))
       .map { case (name, value) => s""""$name":$value""" }
       .mkString("{", ",", "}")
+  }
+
+  private[this] def constHandler[Request, Response](resp: Response)(implicit
+    decoder: DecodeRequest[Request],
+    requestClassTag: ClassTag[Request],
+    encoder: Encoder[Response],
+    responseClassTag: ClassTag[Response],
+    session: RequestSession
+  ): EndpointHandler[Request, Response] = {
+    new EndpointHandler[Request, Response](
+      accepts = MediaTypes.applicationJson,
+      produces = MediaTypes.applicationJson
+    ) {
+      override def apply(v1: Request)(implicit session: RequestSession): Future[Response] = {
+        Future.value(resp)
+      }
+    }
   }
 
 }

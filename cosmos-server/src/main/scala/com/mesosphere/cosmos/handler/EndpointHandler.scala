@@ -1,7 +1,7 @@
 package com.mesosphere.cosmos.handler
 
 import com.mesosphere.cosmos.http.FinchExtensions._
-import com.mesosphere.cosmos.http.{Authorization, MediaType, MediaTypes, RequestSession}
+import com.mesosphere.cosmos.http.{Authorization, MediaType, RequestSession}
 import com.twitter.util.Future
 import io.circe.syntax._
 import io.circe.{Encoder, Json, Printer}
@@ -48,26 +48,4 @@ private[cosmos] abstract class EndpointHandler[Request, Response](
       printer.pretty(encoder(response))
     }
 
-}
-
-object EndpointHandler {
-
-  /**
-    * Create an endpoint that will always return `resp` regardless of what request is sent to it.  Really only useful
-    * for bootstrapping tests.
-    */
-  def const[Request, Response](resp: Response)(implicit
-    decoder: DecodeRequest[Request],
-    requestClassTag: ClassTag[Request],
-    encoder: Encoder[Response],
-    responseClassTag: ClassTag[Response],
-    session: RequestSession
-  ): EndpointHandler[Request, Response] = {
-    new EndpointHandler[Request, Response](
-      accepts = MediaTypes.applicationJson,
-      produces = MediaTypes.applicationJson
-    ) {
-      override def apply(v1: Request)(implicit session: RequestSession): Future[Response] = Future.value(resp)
-    }
-  }
 }
