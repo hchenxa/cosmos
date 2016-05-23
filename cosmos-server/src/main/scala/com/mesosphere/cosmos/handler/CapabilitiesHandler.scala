@@ -8,21 +8,19 @@ import io.circe.Encoder
 import io.finch._
 
 class CapabilitiesHandler private(implicit decodeRequest: DecodeRequest[Any], encoder: Encoder[CapabilitiesResponse])
-  extends EndpointHandler[Any, CapabilitiesResponse]
- {
+  extends EndpointHandler[Any, CapabilitiesResponse](
+    accepts = MediaTypes.any,
+    produces = MediaTypes.CapabilitiesResponse
+  ) {
 
   private[this] val response = CapabilitiesResponse(List(Capability("PACKAGE_MANAGEMENT")))
 
-  override val accepts: MediaType = MediaTypes.any
-  override val produces: MediaType = MediaTypes.CapabilitiesResponse
-
-  override lazy val reader: RequestReader[(RequestSession, Any)] = for {
+  override val reader: RequestReader[(RequestSession, Any)] = for {
     accept <- header("Accept").as[MediaType].should(beTheExpectedType(produces))
     auth <- headerOption("Authorization").as[String]
   } yield {
     RequestSession(auth.map(Authorization(_))) -> None
   }
-
 
   override def apply(v1: Any)(implicit session: RequestSession): Future[CapabilitiesResponse] = {
     Future.value(response)

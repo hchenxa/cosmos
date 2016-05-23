@@ -12,10 +12,10 @@ private[cosmos] class PackageDescribeHandler(
 )(implicit
   bodyDecoder: DecodeRequest[DescribeRequest],
   encoder: Encoder[DescribeResponse]
-) extends EndpointHandler[DescribeRequest, DescribeResponse] {
-  override def accepts: MediaType = MediaTypes.DescribeRequest
-  override def produces: MediaType = MediaTypes.DescribeResponse
-
+) extends EndpointHandler[DescribeRequest, DescribeResponse](
+  accepts = MediaTypes.DescribeRequest,
+  produces = MediaTypes.DescribeResponse
+) {
   override def apply(request: DescribeRequest)(implicit session: RequestSession): Future[DescribeResponse] = {
     packageCache
       .getPackageByPackageVersion(request.packageName, request.packageVersion)

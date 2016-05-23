@@ -13,12 +13,12 @@ private[cosmos] final class PackageRepositoryDeleteHandler(sourcesStorage: Packa
   implicit
   decoder: DecodeRequest[PackageRepositoryDeleteRequest],
   encoder: Encoder[PackageRepositoryDeleteResponse]
-) extends EndpointHandler[PackageRepositoryDeleteRequest, PackageRepositoryDeleteResponse] {
+) extends EndpointHandler[PackageRepositoryDeleteRequest, PackageRepositoryDeleteResponse](
+  accepts = MediaTypes.PackageRepositoryDeleteRequest,
+  produces = MediaTypes.PackageRepositoryDeleteResponse
+) {
 
   import PackageRepositoryDeleteHandler._
-
-  override val accepts: MediaType = MediaTypes.PackageRepositoryDeleteRequest
-  override val produces: MediaType = MediaTypes.PackageRepositoryDeleteResponse
 
   override def apply(
     request: PackageRepositoryDeleteRequest

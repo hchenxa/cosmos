@@ -14,10 +14,10 @@ final class PackageRepositoryAddHandler(sourcesStorage: PackageSourcesStorage)(
   implicit
   decoder: DecodeRequest[PackageRepositoryAddRequest],
   encoder: Encoder[PackageRepositoryAddResponse]
-) extends EndpointHandler[PackageRepositoryAddRequest, PackageRepositoryAddResponse] {
-
-  override val accepts: MediaType = MediaTypes.PackageRepositoryAddRequest
-  override val produces: MediaType = MediaTypes.PackageRepositoryAddResponse
+) extends EndpointHandler[PackageRepositoryAddRequest, PackageRepositoryAddResponse](
+  accepts = MediaTypes.PackageRepositoryAddRequest,
+  produces = MediaTypes.PackageRepositoryAddResponse
+) {
 
   override def apply(
     request: PackageRepositoryAddRequest
