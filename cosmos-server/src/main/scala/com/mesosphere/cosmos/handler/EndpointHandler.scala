@@ -4,7 +4,7 @@ import com.mesosphere.cosmos.http.FinchExtensions._
 import com.mesosphere.cosmos.http.{Authorization, MediaType, RequestSession}
 import com.twitter.util.Future
 import io.circe.syntax._
-import io.circe.{Encoder, Json, Printer}
+import io.circe.{Encoder, Json}
 import io.finch._
 
 import scala.reflect.ClassTag
@@ -41,11 +41,5 @@ private[cosmos] abstract class EndpointHandler[Request, Response](
   } yield {
     RequestSession(auth.map(Authorization(_))) -> req
   }
-
-  private val printer: Printer = Printer.noSpaces.copy(dropNullKeys = true, preserveOrder = true)
-  lazy val encodeResponseType: EncodeResponse[Response] =
-    EncodeResponse.fromString[Response](produces.show, produces.parameters.flatMap(_.get("charset"))) { response =>
-      printer.pretty(encoder(response))
-    }
 
 }
