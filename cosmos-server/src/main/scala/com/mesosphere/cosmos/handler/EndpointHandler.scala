@@ -19,27 +19,27 @@ private[cosmos] abstract class EndpointHandler[Request, Response](
   responseClassTag: ClassTag[Response]
 ) {
 
+  def apply(request: Request)(implicit session: RequestSession): Future[Response]
+
+  private[this] type RequestInfo = (RequestSession, Request)
+
   private[cosmos] def route(
-    routingFn: RequestReader[(RequestSession, Request)] => Endpoint[(RequestSession, Request)]
+    routingFn: RequestReader[RequestInfo] => Endpoint[RequestInfo]
   ): Endpoint[Json] = {
-    routingFn(reader)(respond _)
+    routingFn(reader) { requestInfo: RequestInfo =>
+      implicit val (session, request) = requestInfo
+      this(request)
+        .map(res => Ok(res.asJson).withContentType(Some(produces.show)))
+    }
   }
 
-  val reader: RequestReader[(RequestSession, Request)] = for {
+  val reader: RequestReader[RequestInfo] = for {
     accept <- header("Accept").as[MediaType].should(beTheExpectedType(produces))
     contentType <- header("Content-Type").as[MediaType].should(beTheExpectedType(accepts))
     auth <- headerOption("Authorization").as[String]
     req <- body.as[Request]
   } yield {
     RequestSession(auth.map(Authorization(_))) -> req
-  }
-
-  def apply(request: Request)(implicit session: RequestSession): Future[Response]
-
-  def respond(t: (RequestSession, Request)): Future[Output[Json]] = {
-    implicit val (session, request) = t
-    this(request)
-      .map(res => Ok(res.asJson).withContentType(Some(produces.show)))
   }
 
   private val printer: Printer = Printer.noSpaces.copy(dropNullKeys = true, preserveOrder = true)
