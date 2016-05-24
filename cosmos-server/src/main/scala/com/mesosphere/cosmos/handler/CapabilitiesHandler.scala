@@ -1,35 +1,30 @@
 package com.mesosphere.cosmos.handler
 
-import com.mesosphere.cosmos.http.FinchExtensions._
-import com.mesosphere.cosmos.http.{Authorization, MediaType, MediaTypes, RequestSession}
+import com.mesosphere.cosmos.http.{MediaTypes, RequestSession}
 import com.mesosphere.cosmos.model.{CapabilitiesResponse, Capability}
 import com.twitter.util.{Future, Try}
 import io.circe.Encoder
 import io.finch._
 
-class CapabilitiesHandler private(implicit decodeRequest: DecodeRequest[Any], encoder: Encoder[CapabilitiesResponse])
-  extends EndpointHandler[Any, CapabilitiesResponse](
+class CapabilitiesHandler private(implicit
+  decodeRequest: DecodeRequest[Unit],
+  encoder: Encoder[CapabilitiesResponse]
+) extends EndpointHandler[Unit, CapabilitiesResponse](
     accepts = MediaTypes.any,
-    produces = MediaTypes.CapabilitiesResponse
-  ) {
+    produces = MediaTypes.CapabilitiesResponse,
+    readerBuilder = RequestReaderBuilder.noBody
+) {
 
   private[this] val response = CapabilitiesResponse(List(Capability("PACKAGE_MANAGEMENT")))
 
-  override val reader: RequestReader[(RequestSession, Any)] = for {
-    accept <- header("Accept").as[MediaType].should(beTheExpectedType(produces))
-    auth <- headerOption("Authorization").as[String]
-  } yield {
-    RequestSession(auth.map(Authorization(_))) -> None
-  }
-
-  override def apply(v1: Any)(implicit session: RequestSession): Future[CapabilitiesResponse] = {
+  override def apply(v1: Unit)(implicit session: RequestSession): Future[CapabilitiesResponse] = {
     Future.value(response)
   }
 }
 
 object CapabilitiesHandler {
   def apply()(implicit encoder: Encoder[CapabilitiesResponse]): CapabilitiesHandler = {
-    implicit val anyDecodeRequest: DecodeRequest[Any] = DecodeRequest.instance[Any]( _ => Try { ??? })
+    implicit val decoder = DecodeRequest.instance[Unit](_ => Try(()))
     new CapabilitiesHandler()
   }
 }
