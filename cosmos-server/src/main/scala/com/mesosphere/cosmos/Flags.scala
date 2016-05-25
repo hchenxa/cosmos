@@ -28,11 +28,16 @@ object zookeeperUri extends GlobalFlag[ZooKeeperUri](
 )
 
 object zookeeperAclUser extends GlobalFlag[String](
-  help = "User for ZK ACL"
+  help = "User for ZooKeeper ACL"
 )
 
 object zookeeperAclSecret extends GlobalFlag[String](
-  help = "Secret for ZK ACL"
+  help = "Secret for ZooKeeper ACL"
+)
+
+object zookeeperAclAddToExisting extends GlobalFlag[Boolean](
+  false,
+  help = "Whether to update existing znodes to use acls or not"
 )
 
 object dataDir extends GlobalFlag[file.Path](
