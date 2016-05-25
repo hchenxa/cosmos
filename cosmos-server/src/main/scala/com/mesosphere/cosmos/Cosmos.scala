@@ -13,7 +13,7 @@ import io.finch._
 import io.finch.circe._
 import io.github.benwhitehead.finch.FinchServer
 import org.apache.curator.framework.api.ACLProvider
-import org.apache.curator.framework.CuratorFrameworkFactory
+import org.apache.curator.framework.{CuratorFramework, CuratorFrameworkFactory}
 import org.apache.curator.retry.ExponentialBackoffRetry
 import org.apache.zookeeper.ZooDefs
 import org.apache.zookeeper.data.{ACL, Id}
@@ -272,6 +272,10 @@ object Cosmos extends FinchServer {
         zkClient.close()
       }
 
+      if (zookeeperAclAddToExisting()) {
+        updateAcls(zkClient, aclProvider)
+      }
+
       val sourcesStorage = new ZooKeeperStorage(zkClient)()
 
       val cosmos = Cosmos(adminRouter, marathonPackageRunner, sourcesStorage, dd)
@@ -304,25 +308,35 @@ object Cosmos extends FinchServer {
     )(statsReceiver)
   }
 
+  private[cosmos] def updateAcls(
+    zkClient: CuratorFramework,
+    aclProvider: ACLProvider
+  ): Unit = {
+    // TODO(tyler) recursively update acls
+  }
 }
 
 private[cosmos] final case class DigestACLProvider(
-  userSecret: Option[(String, String)]
+  acls: java.util.List[ACL]
 ) extends ACLProvider {
-  var acls = new java.util.ArrayList[ACL]()
-
-  userSecret.foreach {
-    case (user, secret) => {
-      val id = new Id("digest", s"$user:$secret")
-      val acl = new ACL(ZooDefs.Perms.ALL, id)
-      acls.add(acl)
-    }
-  }
-
   def getAclForPath(path: String): java.util.List[ACL] = {
     acls
   }
   def getDefaultAcl(): java.util.List[ACL] = {
     acls
+  }
+}
+
+private[cosmos] object DigestACLProvider {
+  def apply(userSecret: Option[(String, String)]): DigestACLProvider = {
+    userSecret match {
+      case Some((user, secret)) => {
+        val id = new Id("digest", s"$user:$secret")
+        val acl = new ACL(ZooDefs.Perms.ALL, id)
+        new DigestACLProvider(java.util.Arrays.asList(acl))
+      }
+      case None =>
+        new DigestACLProvider(new java.util.ArrayList[ACL]())
+    }
   }
 }
