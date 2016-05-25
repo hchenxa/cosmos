@@ -195,7 +195,7 @@ final class UserOptionsSpec extends UnitSpec {
   ): EndpointHandler[Request, Response] = {
     new EndpointHandler[Request, Response](
       accepts = MediaTypes.applicationJson,
-      produces = MediaTypes.applicationJson
+      produces = EndpointHandler.producesOnly(MediaTypes.applicationJson)
     ) {
       override def apply(v1: Request)(implicit session: RequestSession): Future[Response] = {
         Future.value(resp)

@@ -14,7 +14,7 @@ private[cosmos] class ListVersionsHandler(
   encoder: Encoder[ListVersionsResponse])
   extends EndpointHandler[ListVersionsRequest, ListVersionsResponse](
     accepts = MediaTypes.ListVersionsRequest,
-    produces = MediaTypes.ListVersionsResponse
+    produces = EndpointHandler.producesOnly(MediaTypes.ListVersionsResponse)
 ) {
   override def apply(request: ListVersionsRequest)(implicit session: RequestSession): Future[ListVersionsResponse] = {
     packageCache

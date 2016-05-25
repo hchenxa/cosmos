@@ -10,8 +10,8 @@ import scala.reflect.ClassTag
 
 private[cosmos] abstract class EndpointHandler[Request, Response](
   accepts: MediaType,
-  protected[this] val produces: MediaType,
-  readerBuilder: RequestReaderBuilder[Request] = RequestReaderBuilder.standard[Request]
+  produces: Seq[(MediaType, Response => Response)],
+  readerBuilder: RequestReaderBuilder[Request, Response] = RequestReaderBuilder.standard[Request, Response]
 )(implicit
   decoder: DecodeRequest[Request],
   requestClassTag: ClassTag[Request],
@@ -21,18 +21,29 @@ private[cosmos] abstract class EndpointHandler[Request, Response](
 
   def apply(request: Request)(implicit session: RequestSession): Future[Response]
 
+  private[this] type Context = EndpointContext[Request, Response]
+
   private[cosmos] def route(
-    routingFn: RequestReader[(RequestSession, Request)] => Endpoint[(RequestSession, Request)]
+    routingFn: RequestReader[Context] => Endpoint[Context]
   ): Endpoint[Json] = {
-    routingFn(reader) { requestInfo: (RequestSession, Request) =>
-      implicit val (session, request) = requestInfo
-      this(request)
-        .map(res => Ok(res.asJson).withContentType(Some(produces.show)))
+    routingFn(reader) { context: Context =>
+      this(context.requestBody)(context.session).map { response =>
+        Ok(context.responseFormatter(response).asJson)
+          .withContentType(Some(context.responseContentType.show))
+      }
     }
   }
 
-  private[this] val reader: RequestReader[(RequestSession, Request)] = {
+  private[this] val reader: RequestReader[Context] = {
     readerBuilder.build(accepts, produces)
+  }
+
+}
+
+object EndpointHandler {
+
+  def producesOnly[Response](mediaType: MediaType): Seq[(MediaType, Response => Response)] = {
+    Seq((mediaType, identity))
   }
 
 }
