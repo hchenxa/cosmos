@@ -257,7 +257,7 @@ object Cosmos extends FinchServer {
       val marathonPackageRunner = new MarathonPackageRunner(adminRouter)
 
       val zkRetryPolicy = new ExponentialBackoffRetry(1000, 3)
-      val aclCreds = (zkAclUser.get zip zkAclSecret.get).headOption
+      val aclCreds = (zookeeperAclUser.get zip zookeeperAclSecret.get).headOption
       val aclProvider = DigestACLProvider(aclCreds)
       val zkClient = CuratorFrameworkFactory.builder()
         .namespace(zkUri.path.stripPrefix("/"))

@@ -43,9 +43,9 @@ class CosmosIntegrationTestServer(javaHome: Option[String], itResourceDirs: Seq[
       s"zk://$connectString/$baseZNode"
     }.get
 
-    val zkAclUser = Random.alphanumeric.take(10).mkString
+    val zookeeperAclUser = Random.alphanumeric.take(10).mkString
 
-    val zkAclSecret = Random.alphanumeric.take(10).mkString
+    val zookeeperAclSecret = Random.alphanumeric.take(10).mkString
 
     val java = javaHome
       .map(_ + "/bin/java")
@@ -74,8 +74,8 @@ class CosmosIntegrationTestServer(javaHome: Option[String], itResourceDirs: Seq[
       classpath,
       "com.simontuffs.onejar.Boot",
       s"-com.mesosphere.cosmos.zookeeperUri=$zkUri",
-      s"-com.mesosphere.cosmos.zkAclUser=$zkAclUser",
-      s"-com.mesosphere.cosmos.zkAclSecret=$zkAclSecret",
+      s"-com.mesosphere.cosmos.zookeeperAclUser=$zookeeperAclUser",
+      s"-com.mesosphere.cosmos.zookeeperAclSecret=$zookeeperAclSecret",
       s"-com.mesosphere.cosmos.dcosUri=$dcosUri"
     ) ++ args
 

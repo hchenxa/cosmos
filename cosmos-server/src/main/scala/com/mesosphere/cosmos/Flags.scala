@@ -27,11 +27,11 @@ object zookeeperUri extends GlobalFlag[ZooKeeperUri](
   "The ZooKeeper connection string"
 )
 
-object zkAclUser extends GlobalFlag[String](
+object zookeeperAclUser extends GlobalFlag[String](
   help = "User for ZK ACL"
 )
 
-object zkAclSecret extends GlobalFlag[String](
+object zookeeperAclSecret extends GlobalFlag[String](
   help = "Secret for ZK ACL"
 )
 
