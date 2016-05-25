@@ -27,7 +27,7 @@ private[cosmos] final class PackageInstallHandler(
   encoder: Encoder[InstallResponse]
 ) extends EndpointHandler[InstallRequest, InstallResponse](
   accepts = MediaTypes.InstallRequest,
-  produces = MediaTypes.InstallResponse
+  produces = EndpointHandler.producesOnly(MediaTypes.InstallResponse)
 ) {
 
   import PackageInstallHandler._

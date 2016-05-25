@@ -11,7 +11,7 @@ class CapabilitiesHandler private(implicit
   encoder: Encoder[CapabilitiesResponse]
 ) extends EndpointHandler[Unit, CapabilitiesResponse](
     accepts = MediaTypes.any,
-    produces = MediaTypes.CapabilitiesResponse,
+    produces = EndpointHandler.producesOnly(MediaTypes.CapabilitiesResponse),
     readerBuilder = RequestReaderBuilder.noBody
 ) {
 

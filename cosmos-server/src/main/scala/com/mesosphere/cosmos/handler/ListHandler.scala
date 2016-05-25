@@ -25,7 +25,7 @@ final class ListHandler(
   responseEncoder: Encoder[ListResponse]
 ) extends EndpointHandler[ListRequest, ListResponse](
   accepts = MediaTypes.ListRequest,
-  produces = MediaTypes.ListResponse
+  produces = EndpointHandler.producesOnly(MediaTypes.ListResponse)
 ) {
 
   override def apply(request: ListRequest)(implicit session: RequestSession): Future[ListResponse] = {

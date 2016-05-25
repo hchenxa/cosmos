@@ -15,7 +15,7 @@ private[cosmos] final class PackageRepositoryDeleteHandler(sourcesStorage: Packa
   encoder: Encoder[PackageRepositoryDeleteResponse]
 ) extends EndpointHandler[PackageRepositoryDeleteRequest, PackageRepositoryDeleteResponse](
   accepts = MediaTypes.PackageRepositoryDeleteRequest,
-  produces = MediaTypes.PackageRepositoryDeleteResponse
+  produces = EndpointHandler.producesOnly(MediaTypes.PackageRepositoryDeleteResponse)
 ) {
 
   import PackageRepositoryDeleteHandler._

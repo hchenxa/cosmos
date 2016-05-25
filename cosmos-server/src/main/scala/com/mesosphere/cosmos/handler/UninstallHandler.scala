@@ -19,7 +19,7 @@ private[cosmos] final class UninstallHandler(
   encoder: Encoder[UninstallResponse]
 ) extends EndpointHandler[UninstallRequest, UninstallResponse](
   accepts = MediaTypes.UninstallRequest,
-  produces = MediaTypes.UninstallResponse
+  produces = EndpointHandler.producesOnly(MediaTypes.UninstallResponse)
 ) {
 
   private type FwIds = List[String]

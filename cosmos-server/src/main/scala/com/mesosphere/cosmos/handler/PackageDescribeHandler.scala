@@ -14,7 +14,7 @@ private[cosmos] class PackageDescribeHandler(
   encoder: Encoder[DescribeResponse]
 ) extends EndpointHandler[DescribeRequest, DescribeResponse](
   accepts = MediaTypes.DescribeRequest,
-  produces = MediaTypes.DescribeResponse
+  produces = EndpointHandler.producesOnly(MediaTypes.DescribeResponse)
 ) {
   override def apply(request: DescribeRequest)(implicit session: RequestSession): Future[DescribeResponse] = {
     packageCache

@@ -14,7 +14,7 @@ private[cosmos] final class PackageRenderHandler(
   encoder: Encoder[RenderResponse]
 ) extends EndpointHandler[RenderRequest, RenderResponse](
   accepts = MediaTypes.RenderRequest,
-  produces = MediaTypes.RenderResponse
+  produces = EndpointHandler.producesOnly(MediaTypes.RenderResponse)
 ) {
 
   import PackageInstallHandler._

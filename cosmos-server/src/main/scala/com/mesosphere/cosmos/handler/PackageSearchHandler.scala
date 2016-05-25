@@ -14,7 +14,7 @@ private[cosmos] class PackageSearchHandler(
   encoder: Encoder[SearchResponse]
 ) extends EndpointHandler[SearchRequest, SearchResponse](
   accepts = MediaTypes.SearchRequest,
-  produces = MediaTypes.SearchResponse
+  produces = EndpointHandler.producesOnly(MediaTypes.SearchResponse)
 ) {
   override def apply(request: SearchRequest)(implicit session: RequestSession): Future[SearchResponse] = {
     packageCache.search(request.query) map { packages =>
