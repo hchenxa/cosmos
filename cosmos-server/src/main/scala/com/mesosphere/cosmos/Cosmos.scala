@@ -257,11 +257,13 @@ object Cosmos extends FinchServer {
       val marathonPackageRunner = new MarathonPackageRunner(adminRouter)
 
       val zkRetryPolicy = new ExponentialBackoffRetry(1000, 3)
+      val aclCreds = (zkAclUser.get zip zkAclSecret.get).headOption
+      val aclProvider = DigestACLProvider(aclCreds)
       val zkClient = CuratorFrameworkFactory.builder()
         .namespace(zkUri.path.stripPrefix("/"))
         .connectString(zkUri.connectString)
         .retryPolicy(zkRetryPolicy)
-        .aclProvider(DigestACL(Some("ok,", "there")))
+        .aclProvider(aclProvider)
         .build
 
       // Start the client and close it on exit
@@ -304,8 +306,11 @@ object Cosmos extends FinchServer {
 
 }
 
-private[cosmos] final case class DigestACL(userSecret: Option[(String, String)]) extends ACLProvider {
+private[cosmos] final case class DigestACLProvider(
+  userSecret: Option[(String, String)]
+) extends ACLProvider {
   var acls = new java.util.ArrayList[ACL]()
+
   userSecret.foreach {
     case (user, secret) => {
       val id = new Id("digest", s"$user:$secret")
