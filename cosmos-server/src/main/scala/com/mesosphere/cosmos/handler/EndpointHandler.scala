@@ -33,7 +33,7 @@ private[cosmos] abstract class EndpointHandler[Request, Response](implicit
 
   /** Temporary method for determining if the tests are written correctly. */
   private[cosmos] def testRoute(method: Method, path: String*): Endpoint[Json] = {
-    endpoint(method)(Endpoint(NoContent(().asJson)))
+    endpoint(method)(path.foldLeft[Endpoint[HNil]](/)(_ / _))(NoContent(().asJson))
   }
 
 }
