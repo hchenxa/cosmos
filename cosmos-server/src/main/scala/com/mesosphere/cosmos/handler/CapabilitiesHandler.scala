@@ -10,9 +10,7 @@ class CapabilitiesHandler private(implicit
   decodeRequest: DecodeRequest[Unit],
   encoder: Encoder[CapabilitiesResponse]
 ) extends EndpointHandler[Unit, CapabilitiesResponse](
-    accepts = MediaTypes.any,
-    produces = EndpointHandler.producesOnly(MediaTypes.CapabilitiesResponse),
-    readerBuilder = RequestReaderBuilder.noBody
+  RequestReaders.noBody(EndpointHandler.producesOnly(MediaTypes.CapabilitiesResponse))
 ) {
 
   private[this] val response = CapabilitiesResponse(List(Capability("PACKAGE_MANAGEMENT")))

@@ -13,8 +13,10 @@ private[cosmos] final class PackageRepositoryListHandler(
   decoder: DecodeRequest[PackageRepositoryListRequest],
   encoder: Encoder[PackageRepositoryListResponse]
 ) extends EndpointHandler[PackageRepositoryListRequest, PackageRepositoryListResponse](
-  accepts = MediaTypes.PackageRepositoryListRequest,
-  produces = EndpointHandler.producesOnly(MediaTypes.PackageRepositoryListResponse)
+  RequestReaders.standard(
+    accepts = MediaTypes.PackageRepositoryListRequest,
+    produces = EndpointHandler.producesOnly(MediaTypes.PackageRepositoryListResponse)
+  )
 ) {
   override def apply(req: PackageRepositoryListRequest)(implicit session: RequestSession): Future[PackageRepositoryListResponse] = {
     sourcesStorage.read().map(PackageRepositoryListResponse(_))
