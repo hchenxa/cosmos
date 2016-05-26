@@ -2,23 +2,14 @@ package com.mesosphere.cosmos.handler
 
 import cats.data.Ior
 import com.mesosphere.cosmos.RepoNameOrUriMissing
-import com.mesosphere.cosmos.http.{MediaType, MediaTypes, RequestSession}
+import com.mesosphere.cosmos.http.RequestSession
 import com.mesosphere.cosmos.model.{PackageRepositoryDeleteRequest, PackageRepositoryDeleteResponse}
 import com.mesosphere.cosmos.repository.PackageSourcesStorage
 import com.twitter.util.Future
-import io.circe.Encoder
-import io.finch.DecodeRequest
 
-private[cosmos] final class PackageRepositoryDeleteHandler(sourcesStorage: PackageSourcesStorage)(
-  implicit
-  decoder: DecodeRequest[PackageRepositoryDeleteRequest],
-  encoder: Encoder[PackageRepositoryDeleteResponse]
-) extends EndpointHandler[PackageRepositoryDeleteRequest, PackageRepositoryDeleteResponse](
-  RequestReaders.standard(
-    accepts = MediaTypes.PackageRepositoryDeleteRequest,
-    produces = EndpointHandler.producesOnly(MediaTypes.PackageRepositoryDeleteResponse)
-  )
-) {
+private[cosmos] final class PackageRepositoryDeleteHandler(sourcesStorage: PackageSourcesStorage)
+  (implicit codec: EndpointCodec[PackageRepositoryDeleteRequest, PackageRepositoryDeleteResponse])
+  extends EndpointHandler {
 
   import PackageRepositoryDeleteHandler._
 

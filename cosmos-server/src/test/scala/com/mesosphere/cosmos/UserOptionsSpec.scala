@@ -70,7 +70,7 @@ final class UserOptionsSpec extends UnitSpec {
           constHandler(PackageRepositoryListResponse(Nil)),
           constHandler(PackageRepositoryAddResponse(Nil)),
           constHandler(PackageRepositoryDeleteResponse(Nil)),
-          CapabilitiesHandler()
+          new CapabilitiesHandler
         )
         val request = RequestBuilder()
           .url("http://dummy.cosmos.host/package/install")
@@ -187,16 +187,9 @@ final class UserOptionsSpec extends UnitSpec {
   }
 
   private[this] def constHandler[Request, Response](resp: Response)(implicit
-    decoder: DecodeRequest[Request],
-    requestClassTag: ClassTag[Request],
-    encoder: Encoder[Response],
-    responseClassTag: ClassTag[Response],
-    session: RequestSession
+    codec: EndpointCodec[Request, Response]
   ): EndpointHandler[Request, Response] = {
-    new EndpointHandler[Request, Response](RequestReaders.standard(
-      accepts = MediaTypes.applicationJson,
-      produces = EndpointHandler.producesOnly(MediaTypes.applicationJson)
-    )) {
+    new EndpointHandler {
       override def apply(v1: Request)(implicit session: RequestSession): Future[Response] = {
         Future.value(resp)
       }

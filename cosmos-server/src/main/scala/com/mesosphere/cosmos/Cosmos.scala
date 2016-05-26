@@ -213,7 +213,7 @@ object Cosmos extends FinchServer {
       new PackageRepositoryListHandler(sourcesStorage),
       new PackageRepositoryAddHandler(sourcesStorage),
       new PackageRepositoryDeleteHandler(sourcesStorage),
-      CapabilitiesHandler()
+      new CapabilitiesHandler
     )(statsReceiver)
   }
 
