@@ -33,7 +33,14 @@ private[cosmos] abstract class EndpointHandler[Request, Response](implicit
 
   /** Temporary method for determining if the tests are written correctly. */
   private[cosmos] def testRoute(method: Method, path: String*): Endpoint[Json] = {
-    endpoint(method)(path.foldLeft[Endpoint[HNil]](/)(_ / _))(NoContent(().asJson))
+    val endpointPath = path.foldLeft[Endpoint[HNil]](/)(_ / _)
+
+    endpoint(method)(endpointPath ? codec.requestReader) {
+      context: EndpointContext[Request, Response] =>
+
+        this(context.requestBody)(RequestSession(None))
+          .map(response => NoContent(response.asJson(codec.responseEncoder)))
+    }
   }
 
 }
