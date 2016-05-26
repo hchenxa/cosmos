@@ -1,21 +1,14 @@
 package com.mesosphere.cosmos.handler
 
-import com.mesosphere.cosmos.http.{MediaType, MediaTypes, RequestSession}
+import com.mesosphere.cosmos.http.RequestSession
 import com.mesosphere.cosmos.model._
 import com.mesosphere.cosmos.repository.PackageCollection
 import com.twitter.util.Future
-import io.circe.Encoder
-import io.finch.DecodeRequest
 
-private[cosmos] class PackageSearchHandler(
-  packageCache: PackageCollection
-)(implicit
-  searchRequestBodyDecoder: DecodeRequest[SearchRequest],
-  encoder: Encoder[SearchResponse]
-) extends EndpointHandler[SearchRequest, SearchResponse](RequestReaders.standard(
-  accepts = MediaTypes.SearchRequest,
-  produces = EndpointHandler.producesOnly(MediaTypes.SearchResponse)
-)) {
+private[cosmos] final class PackageSearchHandler(packageCache: PackageCollection)(implicit
+  codec: EndpointCodec[SearchRequest, SearchResponse]
+) extends EndpointHandler {
+
   override def apply(request: SearchRequest)(implicit session: RequestSession): Future[SearchResponse] = {
     packageCache.search(request.query) map { packages =>
       val sortedPackages = packages.sortBy(p => (!p.selected.getOrElse(false), p.name.toLowerCase))

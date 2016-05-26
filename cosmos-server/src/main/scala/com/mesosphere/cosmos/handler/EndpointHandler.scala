@@ -1,46 +1,39 @@
 package com.mesosphere.cosmos.handler
 
-import com.mesosphere.cosmos.http.{MediaType, RequestSession}
+import com.mesosphere.cosmos.http.RequestSession
 import com.twitter.finagle.http.Method
 import com.twitter.util.Future
+import io.circe.Json
 import io.circe.syntax._
-import io.circe.{Encoder, Json}
 import io.finch._
 import shapeless.HNil
 
-import scala.reflect.ClassTag
-
-private[cosmos] abstract class EndpointHandler[Request, Response](
-  reader: RequestReader[EndpointContext[Request, Response]]
-)(implicit
-  decoder: DecodeRequest[Request],
-  requestClassTag: ClassTag[Request],
-  encoder: Encoder[Response],
-  responseClassTag: ClassTag[Response]
+private[cosmos] abstract class EndpointHandler[Request, Response](implicit
+  codec: EndpointCodec[Request, Response]
 ) {
 
   import EndpointHandler._
 
   def apply(request: Request)(implicit session: RequestSession): Future[Response]
 
-  private[this] type Context = EndpointContext[Request, Response]
-
   private[cosmos] def route(method: Method, path: String*): Endpoint[Json] = {
-    endpoint(method)(path.foldLeft[Endpoint[HNil]](/)(_ / _) ? reader) { context: Context =>
-      this(context.requestBody)(context.session).map { response =>
-        Ok(context.responseFormatter(response).asJson)
-          .withContentType(Some(context.responseContentType.show))
-      }
+    val endpointPath = path.foldLeft[Endpoint[HNil]](/)(_ / _)
+
+    endpoint(method)(endpointPath ? codec.requestReader) {
+      context: EndpointContext[Request, Response] =>
+
+        this(context.requestBody)(context.session).map { response =>
+          val encodedResponse = context.responseFormatter(response)
+            .asJson(codec.responseEncoder)
+
+          Ok(encodedResponse).withContentType(Some(context.responseContentType.show))
+        }
     }
   }
 
 }
 
 object EndpointHandler {
-
-  def producesOnly[Response](mediaType: MediaType): Seq[(MediaType, Response => Response)] = {
-    Seq((mediaType, identity))
-  }
 
   private def endpoint[A](method: Method): Endpoint[A] => Endpoint[A] = {
     method match {
