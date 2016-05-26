@@ -12,10 +12,10 @@ private[cosmos] final class PackageRenderHandler(
 )(implicit
   bodyDecoder: DecodeRequest[RenderRequest],
   encoder: Encoder[RenderResponse]
-) extends EndpointHandler[RenderRequest, RenderResponse](
+) extends EndpointHandler[RenderRequest, RenderResponse](RequestReaders.standard(
   accepts = MediaTypes.RenderRequest,
   produces = EndpointHandler.producesOnly(MediaTypes.RenderResponse)
-) {
+)) {
 
   import PackageInstallHandler._
 

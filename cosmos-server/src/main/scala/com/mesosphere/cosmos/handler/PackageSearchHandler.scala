@@ -12,10 +12,10 @@ private[cosmos] class PackageSearchHandler(
 )(implicit
   searchRequestBodyDecoder: DecodeRequest[SearchRequest],
   encoder: Encoder[SearchResponse]
-) extends EndpointHandler[SearchRequest, SearchResponse](
+) extends EndpointHandler[SearchRequest, SearchResponse](RequestReaders.standard(
   accepts = MediaTypes.SearchRequest,
   produces = EndpointHandler.producesOnly(MediaTypes.SearchResponse)
-) {
+)) {
   override def apply(request: SearchRequest)(implicit session: RequestSession): Future[SearchResponse] = {
     packageCache.search(request.query) map { packages =>
       val sortedPackages = packages.sortBy(p => (!p.selected.getOrElse(false), p.name.toLowerCase))

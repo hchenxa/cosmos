@@ -12,10 +12,10 @@ private[cosmos] class ListVersionsHandler(
 )(implicit
   bodyDecoder: DecodeRequest[ListVersionsRequest],
   encoder: Encoder[ListVersionsResponse])
-  extends EndpointHandler[ListVersionsRequest, ListVersionsResponse](
+  extends EndpointHandler[ListVersionsRequest, ListVersionsResponse](RequestReaders.standard(
     accepts = MediaTypes.ListVersionsRequest,
     produces = EndpointHandler.producesOnly(MediaTypes.ListVersionsResponse)
-) {
+)) {
   override def apply(request: ListVersionsRequest)(implicit session: RequestSession): Future[ListVersionsResponse] = {
     packageCache
       .getPackageIndex(request.packageName)

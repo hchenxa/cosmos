@@ -25,10 +25,10 @@ private[cosmos] final class PackageInstallHandler(
 )(implicit
   bodyDecoder: DecodeRequest[InstallRequest],
   encoder: Encoder[InstallResponse]
-) extends EndpointHandler[InstallRequest, InstallResponse](
+) extends EndpointHandler[InstallRequest, InstallResponse](RequestReaders.standard(
   accepts = MediaTypes.InstallRequest,
   produces = EndpointHandler.producesOnly(MediaTypes.InstallResponse)
-) {
+)) {
 
   import PackageInstallHandler._
 

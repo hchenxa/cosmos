@@ -11,9 +11,7 @@ import shapeless.HNil
 import scala.reflect.ClassTag
 
 private[cosmos] abstract class EndpointHandler[Request, Response](
-  accepts: MediaType,
-  produces: Seq[(MediaType, Response => Response)],
-  readerBuilder: RequestReaderBuilder[Request, Response] = RequestReaderBuilder.standard[Request, Response]
+  reader: RequestReader[EndpointContext[Request, Response]]
 )(implicit
   decoder: DecodeRequest[Request],
   requestClassTag: ClassTag[Request],
@@ -34,10 +32,6 @@ private[cosmos] abstract class EndpointHandler[Request, Response](
           .withContentType(Some(context.responseContentType.show))
       }
     }
-  }
-
-  private[this] val reader: RequestReader[Context] = {
-    readerBuilder.build(accepts, produces)
   }
 
 }

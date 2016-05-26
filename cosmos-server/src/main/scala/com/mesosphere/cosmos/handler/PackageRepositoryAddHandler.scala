@@ -15,8 +15,10 @@ final class PackageRepositoryAddHandler(sourcesStorage: PackageSourcesStorage)(
   decoder: DecodeRequest[PackageRepositoryAddRequest],
   encoder: Encoder[PackageRepositoryAddResponse]
 ) extends EndpointHandler[PackageRepositoryAddRequest, PackageRepositoryAddResponse](
-  accepts = MediaTypes.PackageRepositoryAddRequest,
-  produces = EndpointHandler.producesOnly(MediaTypes.PackageRepositoryAddResponse)
+  RequestReaders.standard(
+    accepts = MediaTypes.PackageRepositoryAddRequest,
+    produces = EndpointHandler.producesOnly(MediaTypes.PackageRepositoryAddResponse)
+  )
 ) {
 
   override def apply(

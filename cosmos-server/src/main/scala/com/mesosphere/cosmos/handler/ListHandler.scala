@@ -23,10 +23,10 @@ final class ListHandler(
 )(implicit
   requestDecoder: DecodeRequest[ListRequest],
   responseEncoder: Encoder[ListResponse]
-) extends EndpointHandler[ListRequest, ListResponse](
+) extends EndpointHandler[ListRequest, ListResponse](RequestReaders.standard(
   accepts = MediaTypes.ListRequest,
   produces = EndpointHandler.producesOnly(MediaTypes.ListResponse)
-) {
+)) {
 
   override def apply(request: ListRequest)(implicit session: RequestSession): Future[ListResponse] = {
     adminRouter.listApps().flatMap { applications =>
