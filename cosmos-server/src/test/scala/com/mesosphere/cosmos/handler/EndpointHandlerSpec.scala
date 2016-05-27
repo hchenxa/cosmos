@@ -6,6 +6,7 @@ import com.mesosphere.cosmos.UnitSpec
 import com.mesosphere.cosmos.http.{Authorization, MediaType, MediaTypes, RequestSession}
 import com.twitter.finagle.http.{Method, RequestBuilder}
 import com.twitter.util.{Await, Future}
+import io.circe.syntax._
 import io.circe.{Decoder, Encoder, Json}
 import io.finch.{Input, Output, RequestReader}
 
@@ -149,6 +150,21 @@ final class EndpointHandlerSpec extends UnitSpec {
             }
           }
 
+        }
+
+        "responseEncoder" - {
+          "int" in {
+            val encoder = Encoder.instance[Unit](_ => 42.asJson)
+            val result = callEndpoint(buildRequestBodyHandler[Unit](())(encoder))
+            val responseBody = extractBody[Int](result)
+            assertResult(42)(responseBody)
+          }
+          "string" in {
+            val encoder = Encoder.instance[Unit](_ => "hello world".asJson)
+            val result = callEndpoint(buildRequestBodyHandler[Unit](())(encoder))
+            val responseBody = extractBody[String](result)
+            assertResult("hello world")(responseBody)
+          }
         }
 
       }
