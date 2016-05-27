@@ -3,7 +3,7 @@ package com.mesosphere.cosmos.handler
 import cats.syntax.option._
 import com.mesosphere.cosmos.http.FinchExtensions._
 import com.mesosphere.cosmos.http.MediaTypeOps.mediaTypeToMediaTypeOps
-import com.mesosphere.cosmos.http.{Authorization, MediaType, RequestSession}
+import com.mesosphere.cosmos.http.{Authorization, MediaType, MediaTypes, RequestSession}
 import io.finch._
 
 import scala.reflect.ClassTag
@@ -47,6 +47,12 @@ object RequestReaders {
     } yield {
       (RequestSession(auth.map(Authorization(_))), responseFormatter, responseContentType)
     }
+  }
+
+  private[handler] def testBaseReader[Res](
+    produces: Seq[(MediaType, Res => Res)]
+  ): RequestReader[(RequestSession, Res => Res, MediaType)] = {
+    RequestReader.value((RequestSession(Some(Authorization("53cr37"))), identity, MediaTypes.any))
   }
 
 }
