@@ -169,6 +169,32 @@ final class EndpointHandlerSpec extends UnitSpec {
 
       }
 
+      "apply method" - {
+        "reverse input" in {
+          assertApply(_.reverse, "dlrow olleh")
+        }
+
+        "uppercase input" in {
+          assertApply(_.toUpperCase, "HELLO WORLD")
+        }
+
+        def assertApply(fn: String => String, expected: String): Unit = {
+          implicit val codec = buildCodec[String, String]("hello world")
+
+          val handler = new EndpointHandler {
+            override def apply(request: String)(implicit
+              session: RequestSession
+            ): Future[String] = {
+              Future.value(fn(request))
+            }
+          }
+
+          val result = callEndpoint(handler)
+          val responseBody = extractBody[String](result)
+          assertResult(expected)(responseBody)
+        }
+      }
+
       type EndpointResult = Option[(Input, Eval[Future[Output[Json]]])]
 
       def buildRequestBodyHandler[A](
@@ -176,8 +202,11 @@ final class EndpointHandlerSpec extends UnitSpec {
         responseFormatter: A => A = identity[A] _,
         responseContentType: MediaType = MediaTypes.any
       )(implicit encoder: Encoder[A]): EndpointHandler[A, A] = {
-        implicit val codec =
-          buildCodec(requestBody, RequestSession(None), responseFormatter, responseContentType)
+        implicit val codec = buildCodec(
+          requestBody = requestBody,
+          responseFormatter = responseFormatter,
+          responseContentType = responseContentType
+        )
 
         new EndpointHandler {
           override def apply(request: A)(implicit session: RequestSession): Future[A] = {
@@ -202,7 +231,7 @@ final class EndpointHandlerSpec extends UnitSpec {
 
       def buildCodec[Req, Res](
         requestBody: Req,
-        session: RequestSession,
+        session: RequestSession = RequestSession(None),
         responseFormatter: Res => Res = identity[Res] _,
         responseContentType: MediaType = MediaTypes.any
       )(implicit encoder: Encoder[Res]): EndpointCodec[Req, Res] = {
