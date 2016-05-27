@@ -42,7 +42,7 @@ private[cosmos] abstract class EndpointHandler[Request, Response](implicit
           val encodedResponse = context.responseFormatter(response)
             .asJson(codec.responseEncoder)
 
-          NoContent(encodedResponse)
+          NoContent(encodedResponse).withContentType(Some(context.responseContentType.show))
         }
     }
   }
