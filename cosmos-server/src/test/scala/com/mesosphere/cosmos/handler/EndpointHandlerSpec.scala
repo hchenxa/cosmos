@@ -118,10 +118,7 @@ final class EndpointHandlerSpec extends UnitSpec {
       def buildRequestBodyHandler[A](requestBody: A)(implicit
         encoder: Encoder[A]
       ): EndpointHandler[A, A] = {
-        val session = RequestSession(None)
-        val context = EndpointContext(requestBody, session, identity[A], MediaTypes.any)
-        val reader = RequestReader.value(context)
-        implicit val codec = EndpointCodec(reader, encoder)
+        implicit val codec = buildCodec(requestBody, RequestSession(None))
 
         new EndpointHandler {
           override def apply(request: A)(implicit session: RequestSession): Future[A] = {
@@ -133,9 +130,7 @@ final class EndpointHandlerSpec extends UnitSpec {
       def buildRequestSessionHandler(
         session: RequestSession
       ): EndpointHandler[Unit, Option[String]] = {
-        val context = EndpointContext((), session, identity[Option[String]], MediaTypes.any)
-        val reader = RequestReader.value(context)
-        implicit val codec = EndpointCodec(reader, implicitly[Encoder[Option[String]]])
+        implicit val codec = buildCodec[Unit, Option[String]]((), session)
 
         new EndpointHandler {
           override def apply(request: Unit)(implicit
@@ -144,6 +139,14 @@ final class EndpointHandlerSpec extends UnitSpec {
             Future.value(session.authorization.map(_.token))
           }
         }
+      }
+
+      def buildCodec[Req, Res](requestBody: Req, session: RequestSession)(implicit
+        encoder: Encoder[Res]
+      ): EndpointCodec[Req, Res] = {
+        val context = EndpointContext(requestBody, session, identity[Res], MediaTypes.any)
+        val reader = RequestReader.value(context)
+        EndpointCodec(reader, encoder)
       }
 
       def callEndpoint[Req, Res](
