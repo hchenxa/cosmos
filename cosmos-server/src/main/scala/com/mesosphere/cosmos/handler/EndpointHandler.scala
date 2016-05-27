@@ -38,8 +38,12 @@ private[cosmos] abstract class EndpointHandler[Request, Response](implicit
     endpoint(method)(endpointPath ? codec.requestReader) {
       context: EndpointContext[Request, Response] =>
 
-        this(context.requestBody)(context.session)
-          .map(response => NoContent(response.asJson(codec.responseEncoder)))
+        this(context.requestBody)(context.session).map { response =>
+          val encodedResponse = context.responseFormatter(response)
+            .asJson(codec.responseEncoder)
+
+          NoContent(encodedResponse)
+        }
     }
   }
 

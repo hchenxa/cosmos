@@ -111,14 +111,26 @@ final class EndpointHandlerSpec extends UnitSpec {
             }
           }
 
+          "responseFormatter modifies the response" - {
+            "plus three" in {
+              val result = callEndpoint(buildRequestBodyHandler[Int](5, _ + 3))
+              assertResponseBody(8, result)
+            }
+            "times three" in {
+              val result = callEndpoint(buildRequestBodyHandler[Int](5, _ * 3))
+              assertResponseBody(15, result)
+            }
+          }
+
         }
 
       }
 
-      def buildRequestBodyHandler[A](requestBody: A)(implicit
-        encoder: Encoder[A]
-      ): EndpointHandler[A, A] = {
-        implicit val codec = buildCodec(requestBody, RequestSession(None))
+      def buildRequestBodyHandler[A](
+        requestBody: A,
+        responseFormatter: A => A = identity[A] _
+      )(implicit encoder: Encoder[A]): EndpointHandler[A, A] = {
+        implicit val codec = buildCodec(requestBody, RequestSession(None), responseFormatter)
 
         new EndpointHandler {
           override def apply(request: A)(implicit session: RequestSession): Future[A] = {
@@ -141,10 +153,12 @@ final class EndpointHandlerSpec extends UnitSpec {
         }
       }
 
-      def buildCodec[Req, Res](requestBody: Req, session: RequestSession)(implicit
-        encoder: Encoder[Res]
-      ): EndpointCodec[Req, Res] = {
-        val context = EndpointContext(requestBody, session, identity[Res], MediaTypes.any)
+      def buildCodec[Req, Res](
+        requestBody: Req,
+        session: RequestSession,
+        responseFormatter: Res => Res = identity[Res] _
+      )(implicit encoder: Encoder[Res]): EndpointCodec[Req, Res] = {
+        val context = EndpointContext(requestBody, session, responseFormatter, MediaTypes.any)
         val reader = RequestReader.value(context)
         EndpointCodec(reader, encoder)
       }
