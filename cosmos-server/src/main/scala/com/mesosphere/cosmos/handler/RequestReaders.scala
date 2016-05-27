@@ -52,7 +52,10 @@ object RequestReaders {
   private[handler] def testBaseReader[Res](
     produces: Seq[(MediaType, Res => Res)]
   ): RequestReader[(RequestSession, Res => Res, MediaType)] = {
-    headerOption("Authorization").map { auth =>
+    for {
+      _ <- header("Accept")
+      auth <- headerOption("Authorization")
+    } yield {
       (RequestSession(auth.map(Authorization(_))), identity, MediaTypes.any)
     }
   }
