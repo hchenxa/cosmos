@@ -2,9 +2,8 @@ package com.mesosphere.cosmos.handler
 
 import cats.Eval
 import cats.data.Xor
-import cats.syntax.option._
 import com.mesosphere.cosmos.UnitSpec
-import com.mesosphere.cosmos.http.{Authorization, MediaTypes, RequestSession}
+import com.mesosphere.cosmos.http.{Authorization, MediaType, MediaTypes, RequestSession}
 import com.twitter.finagle.http.{Method, RequestBuilder}
 import com.twitter.util.{Await, Future}
 import io.circe.{Decoder, Encoder, Json}
@@ -22,27 +21,27 @@ final class EndpointHandlerSpec extends UnitSpec {
 
         "route get matches request get" in {
           val result = callWithMethods(routeMethod = Method.Get, requestMethod = Method.Get)
-          assertSuccessfulRequest(result)
+          assertSuccessResponse(result)
         }
 
         "route get does not match request post" in {
           val result = callWithMethods(routeMethod = Method.Get, requestMethod = Method.Post)
-          assertFailedRequest(result)
+          assertFailureResponse(result)
         }
 
         "route post does not match request get" in {
           val result = callWithMethods(routeMethod = Method.Post, requestMethod = Method.Get)
-          assertFailedRequest(result)
+          assertFailureResponse(result)
         }
 
         "route post matches request post" in {
           val result = callWithMethods(routeMethod = Method.Post, requestMethod = Method.Post)
-          assertSuccessfulRequest(result)
+          assertSuccessResponse(result)
         }
 
         def callWithMethods(routeMethod: Method, requestMethod: Method): EndpointResult = {
           callEndpoint(
-            handler = buildRequestBodyHandler(()),
+            handler = buildRequestBodyHandler(requestBody = ()),
             routeMethod = routeMethod,
             requestMethod = requestMethod
           )
@@ -54,26 +53,27 @@ final class EndpointHandlerSpec extends UnitSpec {
 
         "route path foo/bar matches request path foo/bar" in {
           val result = callWithPaths(routePath = Seq("foo", "bar"), requestPath = Seq("foo", "bar"))
-          assertSuccessfulRequest(result)
+          assertSuccessResponse(result)
         }
 
         "route path foo/bar does not match request path foo/baz" in {
           val result = callWithPaths(routePath = Seq("foo", "bar"), requestPath = Seq("foo", "baz"))
-          assertFailedRequest(result)
+          assertFailureResponse(result)
         }
 
         "route path foo/baz does not match request path foo/bar" in {
           val result = callWithPaths(routePath = Seq("foo", "baz"), requestPath = Seq("foo", "bar"))
-          assertFailedRequest(result)
+          assertFailureResponse(result)
         }
 
         "route path foo/baz matches request path foo/baz" in {
           val result = callWithPaths(routePath = Seq("foo", "baz"), requestPath = Seq("foo", "baz"))
-          assertSuccessfulRequest(result)
+          assertSuccessResponse(result)
         }
 
         def callWithPaths(routePath: Seq[String], requestPath: Seq[String]): EndpointResult = {
-          callEndpoint(buildRequestBodyHandler(()), routePath = routePath, requestPath = requestPath)
+          val handler = buildRequestBodyHandler(requestBody = ())
+          callEndpoint(handler, routePath = routePath, requestPath = requestPath)
         }
 
       }
@@ -85,13 +85,15 @@ final class EndpointHandlerSpec extends UnitSpec {
           "requestBody is passed to apply" - {
 
             "int value" in {
-              val result = callEndpoint(buildRequestBodyHandler(42))
-              assertResponseBody(42, result)
+              val result = callEndpoint(buildRequestBodyHandler(requestBody = 42))
+              val responseBody = extractBody[Int](result)
+              assertResult(42)(responseBody)
             }
 
             "string value" in {
-              val result = callEndpoint(buildRequestBodyHandler("hello world"))
-              assertResponseBody("hello world", result)
+              val result = callEndpoint(buildRequestBodyHandler(requestBody = "hello world"))
+              val responseBody = extractBody[String](result)
+              assertResult("hello world")(responseBody)
             }
 
           }
@@ -99,11 +101,13 @@ final class EndpointHandlerSpec extends UnitSpec {
           "requestSession is passed to apply" - {
             "Some value" in {
               val result = callWithRequestSession(RequestSession(Some(Authorization("53cr37"))))
-              assertResponseBody("53cr37".some, result)
+              val responseBody = extractBody[Option[String]](result)
+              assertResult(Some("53cr37"))(responseBody)
             }
             "None" in {
               val result = callWithRequestSession(RequestSession(None))
-              assertResponseBody(none[String], result)
+              val responseBody = extractBody[Option[String]](result)
+              assertResult(None)(responseBody)
             }
 
             def callWithRequestSession(session: RequestSession): EndpointResult = {
@@ -113,12 +117,37 @@ final class EndpointHandlerSpec extends UnitSpec {
 
           "responseFormatter modifies the response" - {
             "plus three" in {
-              val result = callEndpoint(buildRequestBodyHandler[Int](5, _ + 3))
-              assertResponseBody(8, result)
+              val handler = buildRequestBodyHandler[Int](requestBody = 5, responseFormatter = _ + 3)
+              val result = callEndpoint(handler)
+              val responseBody = extractBody[Int](result)
+              assertResult(8)(responseBody)
             }
             "times three" in {
-              val result = callEndpoint(buildRequestBodyHandler[Int](5, _ * 3))
-              assertResponseBody(15, result)
+              val handler = buildRequestBodyHandler[Int](requestBody = 5, responseFormatter = _ * 3)
+              val result = callEndpoint(handler)
+              val responseBody = extractBody[Int](result)
+              assertResult(15)(responseBody)
+            }
+          }
+
+          "responseContentType is sent with the response" - {
+            "application/json" in {
+              val result = callEndpoint(buildRequestBodyHandler(
+                requestBody = (),
+                responseContentType = MediaTypes.applicationJson
+              ))
+
+              val contentType = extractContentType(result)
+              assertResult(MediaTypes.applicationJson.show)(contentType)
+            }
+            "text/plain" in {
+              val result = callEndpoint(buildRequestBodyHandler(
+                requestBody = (),
+                responseContentType = MediaType("text", "plain")
+              ))
+
+              val contentType = extractContentType(result)
+              assertResult(MediaType("text", "plain").show)(contentType)
             }
           }
 
@@ -128,9 +157,11 @@ final class EndpointHandlerSpec extends UnitSpec {
 
       def buildRequestBodyHandler[A](
         requestBody: A,
-        responseFormatter: A => A = identity[A] _
+        responseFormatter: A => A = identity[A] _,
+        responseContentType: MediaType = MediaTypes.any
       )(implicit encoder: Encoder[A]): EndpointHandler[A, A] = {
-        implicit val codec = buildCodec(requestBody, RequestSession(None), responseFormatter)
+        implicit val codec =
+          buildCodec(requestBody, RequestSession(None), responseFormatter, responseContentType)
 
         new EndpointHandler {
           override def apply(request: A)(implicit session: RequestSession): Future[A] = {
@@ -156,9 +187,10 @@ final class EndpointHandlerSpec extends UnitSpec {
       def buildCodec[Req, Res](
         requestBody: Req,
         session: RequestSession,
-        responseFormatter: Res => Res = identity[Res] _
+        responseFormatter: Res => Res = identity[Res] _,
+        responseContentType: MediaType = MediaTypes.any
       )(implicit encoder: Encoder[Res]): EndpointCodec[Req, Res] = {
-        val context = EndpointContext(requestBody, session, responseFormatter, MediaTypes.any)
+        val context = EndpointContext(requestBody, session, responseFormatter, responseContentType)
         val reader = RequestReader.value(context)
         EndpointCodec(reader, encoder)
       }
@@ -178,19 +210,29 @@ final class EndpointHandlerSpec extends UnitSpec {
         endpoint(Input(request))
       }
 
-      def assertSuccessfulRequest(result: EndpointResult): Unit = assertResponseBody((), result)
-
-      def assertResponseBody[A](expectedBody: A, endpointResult: EndpointResult)(implicit
-        decoder: Decoder[A]
-      ): Unit = {
-        inside(endpointResult) { case Some((_, eval)) =>
-          inside(Await.result(eval.value).value.as[A]) { case Xor.Right(responseBody) =>
-            assertResult(expectedBody)(responseBody)
-          }
-        }
+      def assertSuccessResponse(result: EndpointResult): Unit = {
+        val body = extractBody[Unit](result)
+        assertResult(())(body)
       }
 
-      def assertFailedRequest(result: EndpointResult): Unit = assertResult(None)(result)
+      def assertFailureResponse(result: EndpointResult): Unit = assertResult(None)(result)
+
+      def extractBody[A: Decoder](result: EndpointResult): A = {
+        val response = extractResponse(result)
+        val Xor.Right(body) = response.value.as[A]
+        body
+      }
+
+      def extractContentType(result: EndpointResult): String = {
+        val response = extractResponse(result)
+        val Some(contentType) = response.contentType
+        contentType
+      }
+
+      def extractResponse(result: EndpointResult): Output[Json] = {
+        val Some((_, eval)) = result
+        Await.result(eval.value)
+      }
 
     }
 
