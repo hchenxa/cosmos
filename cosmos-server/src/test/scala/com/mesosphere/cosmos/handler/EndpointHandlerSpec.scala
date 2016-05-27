@@ -5,10 +5,10 @@ import cats.data.Xor
 import cats.syntax.option._
 import com.mesosphere.cosmos.UnitSpec
 import com.mesosphere.cosmos.http.{Authorization, MediaTypes, RequestSession}
-import com.twitter.finagle.http.{Method, Request, RequestBuilder}
+import com.twitter.finagle.http.{Method, RequestBuilder}
 import com.twitter.util.{Await, Future}
 import io.circe.{Decoder, Encoder, Json}
-import io.finch.{Endpoint, Input, Output, RequestReader}
+import io.finch.{Input, Output, RequestReader}
 
 final class EndpointHandlerSpec extends UnitSpec {
 
@@ -41,10 +41,11 @@ final class EndpointHandlerSpec extends UnitSpec {
         }
 
         def callWithMethods(routeMethod: Method, requestMethod: Method): EndpointResult = {
-          val endpoint = buildEndpoint(buildRequestBodyHandler(()), method = routeMethod)
-          val request = buildRequest(method = requestMethod)
-
-          callEndpoint(endpoint, request)
+          callEndpoint(
+            handler = buildRequestBodyHandler(()),
+            routeMethod = routeMethod,
+            requestMethod = requestMethod
+          )
         }
 
       }
@@ -72,10 +73,7 @@ final class EndpointHandlerSpec extends UnitSpec {
         }
 
         def callWithPaths(routePath: Seq[String], requestPath: Seq[String]): EndpointResult = {
-          val endpoint = buildEndpoint(buildRequestBodyHandler(()), path = routePath)
-          val request = buildRequest(path = requestPath)
-
-          callEndpoint(endpoint, request)
+          callEndpoint(buildRequestBodyHandler(()), routePath = routePath, requestPath = requestPath)
         }
 
       }
@@ -87,20 +85,13 @@ final class EndpointHandlerSpec extends UnitSpec {
           "requestBody is passed to apply" - {
 
             "int value" in {
-              val result = callWithRequestBody(42)
+              val result = callEndpoint(buildRequestBodyHandler(42))
               assertResponseBody(42, result)
             }
 
             "string value" in {
-              val result = callWithRequestBody("hello world")
+              val result = callEndpoint(buildRequestBodyHandler("hello world"))
               assertResponseBody("hello world", result)
-            }
-
-            def callWithRequestBody[A](body: A)(implicit encoder: Encoder[A]): EndpointResult = {
-              val endpoint = buildEndpoint(buildRequestBodyHandler(body))
-              val request = buildRequest()
-
-              callEndpoint(endpoint, request)
             }
 
           }
@@ -116,10 +107,7 @@ final class EndpointHandlerSpec extends UnitSpec {
             }
 
             def callWithRequestSession(session: RequestSession): EndpointResult = {
-              val endpoint = buildEndpoint(buildRequestSessionHandler(session))
-              val request = buildRequest()
-
-              callEndpoint(endpoint, request)
+              callEndpoint(buildRequestSessionHandler(session))
             }
           }
 
@@ -158,21 +146,18 @@ final class EndpointHandlerSpec extends UnitSpec {
         }
       }
 
-      def buildEndpoint[Req, Res](
+      def callEndpoint[Req, Res](
         handler: EndpointHandler[Req, Res],
-        method: Method = Method.Post,
-        path: Seq[String] = Seq.empty
-      ): Endpoint[Json] = {
-        handler.testRoute(method, path: _*)
-      }
+        routeMethod: Method = Method.Post,
+        routePath: Seq[String] = Seq.empty,
+        requestMethod: Method = Method.Post,
+        requestPath: Seq[String] = Seq.empty
+      ): EndpointResult = {
+        val endpoint = handler.testRoute(routeMethod, routePath: _*)
+        val request = RequestBuilder()
+          .url(s"http://some.host/${requestPath.mkString("/")}")
+          .build(requestMethod, content = None)
 
-      def buildRequest(method: Method = Method.Post, path: Seq[String] = Seq.empty): Request = {
-        RequestBuilder()
-          .url(s"http://some.host/${path.mkString("/")}")
-          .build(method, content = None)
-      }
-
-      def callEndpoint(endpoint: Endpoint[Json], request: Request): EndpointResult = {
         endpoint(Input(request))
       }
 
