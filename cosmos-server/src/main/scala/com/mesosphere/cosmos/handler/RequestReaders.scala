@@ -53,7 +53,7 @@ object RequestReaders {
     produces: Seq[(MediaType, Res => Res)]
   ): RequestReader[(RequestSession, Res => Res, MediaType)] = {
     for {
-      _ <- header("Accept")
+      _ <- header("Accept").as[MediaType]
       auth <- headerOption("Authorization")
     } yield {
       (RequestSession(auth.map(Authorization(_))), identity, MediaTypes.any)
