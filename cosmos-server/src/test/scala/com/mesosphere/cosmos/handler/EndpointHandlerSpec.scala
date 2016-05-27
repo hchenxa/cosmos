@@ -4,7 +4,7 @@ import cats.Eval
 import cats.data.Xor
 import com.mesosphere.cosmos.UnitSpec
 import com.mesosphere.cosmos.http.{Authorization, MediaType, MediaTypes, RequestSession}
-import com.twitter.finagle.http.{Method, RequestBuilder}
+import com.twitter.finagle.http.{Method, RequestBuilder, Status}
 import com.twitter.util.{Await, Future}
 import io.circe.syntax._
 import io.circe.{Decoder, Encoder, Json}
@@ -195,6 +195,12 @@ final class EndpointHandlerSpec extends UnitSpec {
         }
       }
 
+      "status code" in {
+        val result = callEndpoint(buildRequestBodyHandler(requestBody = ()))
+        val response = extractResponse(result)
+        assertResult(Status.Ok)(response.status)
+      }
+
       type EndpointResult = Option[(Input, Eval[Future[Output[Json]]])]
 
       def buildRequestBodyHandler[A](
@@ -247,7 +253,7 @@ final class EndpointHandlerSpec extends UnitSpec {
         requestMethod: Method = Method.Post,
         requestPath: Seq[String] = Seq.empty
       ): EndpointResult = {
-        val endpoint = handler.testRoute(routeMethod, routePath: _*)
+        val endpoint = handler.route(routeMethod, routePath: _*)
         val request = RequestBuilder()
           .url(s"http://some.host/${requestPath.mkString("/")}")
           .build(requestMethod, content = None)
