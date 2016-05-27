@@ -38,7 +38,7 @@ private[cosmos] abstract class EndpointHandler[Request, Response](implicit
     endpoint(method)(endpointPath ? codec.requestReader) {
       context: EndpointContext[Request, Response] =>
 
-        this(context.requestBody)(RequestSession(None))
+        this(context.requestBody)(context.session)
           .map(response => NoContent(response.asJson(codec.responseEncoder)))
     }
   }
