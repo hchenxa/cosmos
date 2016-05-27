@@ -25,6 +25,12 @@ final class RequestReadersSpec extends UnitSpec {
       val result = runReader(accept = None)
       assert(result.isEmpty)
     }
+
+    "Fails if the Accept header is not a MediaType" in {
+      val result = runReader(accept = Some("---not-a-media-type---"))
+      assert(result.isEmpty)
+    }
+
   }
 
 }
@@ -32,7 +38,7 @@ final class RequestReadersSpec extends UnitSpec {
 object RequestReadersSpec {
 
   def runReader(
-    accept: Option[String] = Some("whatever"),
+    accept: Option[String] = Some("application/json"),
     authorization: Option[String] = None
   ): Option[RequestSession] = {
     val request = RequestBuilder()
