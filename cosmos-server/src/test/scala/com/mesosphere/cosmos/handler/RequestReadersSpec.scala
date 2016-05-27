@@ -12,13 +12,18 @@ final class RequestReadersSpec extends UnitSpec {
   "Properties shared by all request readers" - {
 
     "Result contains Authorization if the request did" in {
-      val requestSession = runReader(authorization = Some("53cr37"))
+      val Some(requestSession) = runReader(authorization = Some("53cr37"))
       assertResult(RequestSession(Some(Authorization("53cr37"))))(requestSession)
     }
 
     "Result omits Authorization if the request did" in {
-      val requestSession = runReader(authorization = None)
+      val Some(requestSession) = runReader(authorization = None)
       assertResult(RequestSession(None))(requestSession)
+    }
+
+    "Fails if the Accept header is missing" in {
+      val result = runReader(accept = None)
+      assert(result.isEmpty)
     }
   }
 
@@ -26,17 +31,20 @@ final class RequestReadersSpec extends UnitSpec {
 
 object RequestReadersSpec {
 
-  def runReader(authorization: Option[String]): RequestSession = {
-    val baseRequestBuilder = RequestBuilder().url("http://some.host")
-    val builderWithAuth = authorization match {
-      case Some(auth) => baseRequestBuilder.setHeader("Authorization", auth)
-      case _ => baseRequestBuilder
-    }
-    val request = builderWithAuth.buildGet()
+  def runReader(
+    accept: Option[String] = Some("whatever"),
+    authorization: Option[String] = None
+  ): Option[RequestSession] = {
+    val request = RequestBuilder()
+      .url("http://some.host")
+      .setHeader("Accept", accept.toSeq)
+      .setHeader("Authorization", authorization.toSeq)
+      .buildGet()
 
     val reader = RequestReaders.testBaseReader[Unit](Seq.empty)
-    val (requestSession, _, _) = Await.result(reader(request))
-    requestSession
+    Await.result(reader(request).liftToTry)
+      .map { case (requestSession, _, _) => requestSession }
+      .toOption
   }
 
 }
