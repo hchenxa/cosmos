@@ -15,28 +15,26 @@ final class EndpointHandlerSpec extends UnitSpec {
 
     "route()" - {
 
-      type EndpointResult = Option[(Input, Eval[Future[Output[Json]]])]
-
       "HTTP method parameter" - {
 
         "route get matches request get" in {
           val result = callWithMethods(routeMethod = Method.Get, requestMethod = Method.Get)
-          assertSuccessResponse(result)
+          assert(result.isDefined)
         }
 
         "route get does not match request post" in {
           val result = callWithMethods(routeMethod = Method.Get, requestMethod = Method.Post)
-          assertFailureResponse(result)
+          assert(result.isEmpty)
         }
 
         "route post does not match request get" in {
           val result = callWithMethods(routeMethod = Method.Post, requestMethod = Method.Get)
-          assertFailureResponse(result)
+          assert(result.isEmpty)
         }
 
         "route post matches request post" in {
           val result = callWithMethods(routeMethod = Method.Post, requestMethod = Method.Post)
-          assertSuccessResponse(result)
+          assert(result.isDefined)
         }
 
         def callWithMethods(routeMethod: Method, requestMethod: Method): EndpointResult = {
@@ -53,22 +51,22 @@ final class EndpointHandlerSpec extends UnitSpec {
 
         "route path foo/bar matches request path foo/bar" in {
           val result = callWithPaths(routePath = Seq("foo", "bar"), requestPath = Seq("foo", "bar"))
-          assertSuccessResponse(result)
+          assert(result.isDefined)
         }
 
         "route path foo/bar does not match request path foo/baz" in {
           val result = callWithPaths(routePath = Seq("foo", "bar"), requestPath = Seq("foo", "baz"))
-          assertFailureResponse(result)
+          assert(result.isEmpty)
         }
 
         "route path foo/baz does not match request path foo/bar" in {
           val result = callWithPaths(routePath = Seq("foo", "baz"), requestPath = Seq("foo", "bar"))
-          assertFailureResponse(result)
+          assert(result.isEmpty)
         }
 
         "route path foo/baz matches request path foo/baz" in {
           val result = callWithPaths(routePath = Seq("foo", "baz"), requestPath = Seq("foo", "baz"))
-          assertSuccessResponse(result)
+          assert(result.isDefined)
         }
 
         def callWithPaths(routePath: Seq[String], requestPath: Seq[String]): EndpointResult = {
@@ -155,6 +153,8 @@ final class EndpointHandlerSpec extends UnitSpec {
 
       }
 
+      type EndpointResult = Option[(Input, Eval[Future[Output[Json]]])]
+
       def buildRequestBodyHandler[A](
         requestBody: A,
         responseFormatter: A => A = identity[A] _,
@@ -209,13 +209,6 @@ final class EndpointHandlerSpec extends UnitSpec {
 
         endpoint(Input(request))
       }
-
-      def assertSuccessResponse(result: EndpointResult): Unit = {
-        val body = extractBody[Unit](result)
-        assertResult(())(body)
-      }
-
-      def assertFailureResponse(result: EndpointResult): Unit = assertResult(None)(result)
 
       def extractBody[A: Decoder](result: EndpointResult): A = {
         val response = extractResponse(result)
