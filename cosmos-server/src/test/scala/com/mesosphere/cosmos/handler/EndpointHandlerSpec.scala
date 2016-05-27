@@ -2,8 +2,9 @@ package com.mesosphere.cosmos.handler
 
 import cats.Eval
 import cats.data.Xor
+import cats.syntax.option._
 import com.mesosphere.cosmos.UnitSpec
-import com.mesosphere.cosmos.http.{MediaTypes, RequestSession}
+import com.mesosphere.cosmos.http.{Authorization, MediaTypes, RequestSession}
 import com.twitter.finagle.http.{Method, Request, RequestBuilder}
 import com.twitter.util.{Await, Future}
 import io.circe.{Decoder, Encoder, Json}
@@ -40,7 +41,7 @@ final class EndpointHandlerSpec extends UnitSpec {
         }
 
         def callWithMethods(routeMethod: Method, requestMethod: Method): EndpointResult = {
-          val endpoint = buildEndpoint(buildHandler(()), method = routeMethod)
+          val endpoint = buildEndpoint(buildRequestBodyHandler(()), method = routeMethod)
           val request = buildRequest(method = requestMethod)
 
           callEndpoint(endpoint, request)
@@ -71,7 +72,7 @@ final class EndpointHandlerSpec extends UnitSpec {
         }
 
         def callWithPaths(routePath: Seq[String], requestPath: Seq[String]): EndpointResult = {
-          val endpoint = buildEndpoint(buildHandler(()), path = routePath)
+          val endpoint = buildEndpoint(buildRequestBodyHandler(()), path = routePath)
           val request = buildRequest(path = requestPath)
 
           callEndpoint(endpoint, request)
@@ -83,7 +84,7 @@ final class EndpointHandlerSpec extends UnitSpec {
 
         "requestReader" - {
 
-          "requestBody is passed to EndpointHandler.apply" - {
+          "requestBody is passed to apply" - {
 
             "int value" in {
               val result = callWithRequestBody(42)
@@ -96,18 +97,37 @@ final class EndpointHandlerSpec extends UnitSpec {
             }
 
             def callWithRequestBody[A](body: A)(implicit encoder: Encoder[A]): EndpointResult = {
-              val endpoint = buildEndpoint(buildHandler(body))
+              val endpoint = buildEndpoint(buildRequestBodyHandler(body))
               val request = buildRequest()
 
               callEndpoint(endpoint, request)
             }
 
           }
+
+          "requestSession is passed to apply" - {
+            "Some value" in {
+              val result = callWithRequestSession(RequestSession(Some(Authorization("53cr37"))))
+              assertResponseBody("53cr37".some, result)
+            }
+            "None" in {
+              val result = callWithRequestSession(RequestSession(None))
+              assertResponseBody(none[String], result)
+            }
+
+            def callWithRequestSession(session: RequestSession): EndpointResult = {
+              val endpoint = buildEndpoint(buildRequestSessionHandler(session))
+              val request = buildRequest()
+
+              callEndpoint(endpoint, request)
+            }
+          }
+
         }
 
       }
 
-      def buildHandler[A](requestBody: A)(implicit
+      def buildRequestBodyHandler[A](requestBody: A)(implicit
         encoder: Encoder[A]
       ): EndpointHandler[A, A] = {
         val session = RequestSession(None)
@@ -118,6 +138,22 @@ final class EndpointHandlerSpec extends UnitSpec {
         new EndpointHandler {
           override def apply(request: A)(implicit session: RequestSession): Future[A] = {
             Future.value(request)
+          }
+        }
+      }
+
+      def buildRequestSessionHandler(
+        session: RequestSession
+      ): EndpointHandler[Unit, Option[String]] = {
+        val context = EndpointContext((), session, identity[Option[String]], MediaTypes.any)
+        val reader = RequestReader.value(context)
+        implicit val codec = EndpointCodec(reader, implicitly[Encoder[Option[String]]])
+
+        new EndpointHandler {
+          override def apply(request: Unit)(implicit
+            session: RequestSession
+          ): Future[Option[String]] = {
+            Future.value(session.authorization.map(_.token))
           }
         }
       }
