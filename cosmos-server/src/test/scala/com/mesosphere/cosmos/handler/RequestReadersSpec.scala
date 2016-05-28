@@ -3,7 +3,10 @@ package com.mesosphere.cosmos.handler
 import com.mesosphere.cosmos.UnitSpec
 import com.mesosphere.cosmos.http.{Authorization, MediaType, MediaTypes, RequestSession}
 import com.twitter.finagle.http.RequestBuilder
+import com.twitter.io.Buf
 import com.twitter.util.{Await, Return, Try}
+import io.circe.Encoder
+import io.circe.syntax._
 import io.finch.RequestReader
 import org.scalatest.PrivateMethodTester
 
@@ -11,7 +14,65 @@ final class RequestReadersSpec extends UnitSpec {
 
   import RequestReadersSpec._
 
-  "Properties shared by all request readers" - {
+  "noBody" - {
+
+    behave like baseReader() {
+      new RequestReaderBuilder[Unit] {
+        override def apply[Res](
+          produces: Seq[(MediaType, Res => Res)]
+        ): RequestReader[EndpointContext[Unit, Res]] = RequestReaders.noBody(produces)
+      }
+    }
+
+  }
+
+  "standard" - {
+
+    behave like baseReader(contentType = Some(MediaTypes.applicationJson), body = Some("body")) {
+      new RequestReaderBuilder[String] {
+        override def apply[Res](
+          produces: Seq[(MediaType, Res => Res)]
+        ): RequestReader[EndpointContext[String, Res]] = RequestReaders.standard(
+          accepts = MediaTypes.applicationJson,
+          produces = produces
+        )
+      }
+    }
+
+  }
+
+  trait RequestReaderBuilder[Req] {
+    def apply[Res](
+      produces: Seq[(MediaType, Res => Res)]
+    ): RequestReader[EndpointContext[Req, Res]]
+  }
+
+  def baseReader[Req: Encoder](contentType: Option[MediaType] = None, body: Option[Req] = None)(
+    builder: RequestReaderBuilder[Req]
+  ): Unit = {
+
+    val encodedBody: Buf = body match {
+      case Some(b) => Buf.Utf8(b.asJson.noSpaces)
+      case _ => Buf.Empty
+    }
+
+    def runReader[Res](
+      accept: Option[String] = Some(MediaTypes.applicationJson.show),
+      authorization: Option[String] = None,
+      produces: Seq[(MediaType, Res => Res)] = Seq((MediaTypes.applicationJson, identity[Res] _))
+    ): Try[BaseReadValues[Res]] = {
+      val request = RequestBuilder()
+        .url("http://some.host")
+        .setHeader("Accept", accept.toSeq)
+        .setHeader("Authorization", authorization.toSeq)
+        .setHeader("Content-Type", contentType.map(_.show).toSeq)
+        .buildPost(encodedBody)
+
+      val reader = builder(produces)
+      Await.result(reader(request).liftToTry).map { context =>
+        (context.session, context.responseFormatter, context.responseContentType)
+      }
+    }
 
     "Result contains Authorization if the request did" in {
       val Return((requestSession, _, _)) = runReader(authorization = Some("53cr37"))
@@ -68,21 +129,5 @@ final class RequestReadersSpec extends UnitSpec {
 object RequestReadersSpec extends PrivateMethodTester {
 
   type BaseReadValues[Res] = (RequestSession, Res => Res, MediaType)
-
-  def runReader[Res](
-    accept: Option[String] = Some(MediaTypes.applicationJson.show),
-    authorization: Option[String] = None,
-    produces: Seq[(MediaType, Res => Res)] = Seq((MediaTypes.applicationJson, identity[Res] _))
-  ): Try[BaseReadValues[Res]] = {
-    val request = RequestBuilder()
-      .url("http://some.host")
-      .setHeader("Accept", accept.toSeq)
-      .setHeader("Authorization", authorization.toSeq)
-      .buildGet()
-
-    val baseReader = PrivateMethod[RequestReader[BaseReadValues[Res]]]('baseReader)
-    val reader = RequestReaders invokePrivate baseReader(produces)
-    Await.result(reader(request).liftToTry)
-  }
 
 }
