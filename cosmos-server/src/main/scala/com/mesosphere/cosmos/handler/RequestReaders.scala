@@ -43,22 +43,6 @@ object RequestReaders {
           produces.find { case (supported, _) => supported.isCompatibleWith(accept) }
             .toRightXor(s"should match one of: ${produces.map(_._1.show).mkString(", ")}")
         }
-      auth <- headerOption("Authorization").as[String]
-    } yield {
-      (RequestSession(auth.map(Authorization(_))), responseFormatter, responseContentType)
-    }
-  }
-
-  private[handler] def testBaseReader[Res](
-    produces: Seq[(MediaType, Res => Res)]
-  ): RequestReader[(RequestSession, Res => Res, MediaType)] = {
-    for {
-      (responseContentType, responseFormatter) <- header("Accept")
-        .as[MediaType]
-        .convert { accept =>
-          produces.find { case (supported, _) => supported.isCompatibleWith(accept) }
-            .toRightXor(s"should match one of: ${produces.map(_._1.show).mkString(", ")}")
-        }
       auth <- headerOption("Authorization")
     } yield {
       (RequestSession(auth.map(Authorization(_))), responseFormatter, responseContentType)
