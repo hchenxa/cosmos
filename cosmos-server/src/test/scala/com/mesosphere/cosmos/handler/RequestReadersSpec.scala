@@ -12,12 +12,12 @@ final class RequestReadersSpec extends UnitSpec {
   "Properties shared by all request readers" - {
 
     "Result contains Authorization if the request did" in {
-      val Return(requestSession) = runReader(authorization = Some("53cr37"))
+      val Return((requestSession, _)) = runReader(authorization = Some("53cr37"))
       assertResult(RequestSession(Some(Authorization("53cr37"))))(requestSession)
     }
 
     "Result omits Authorization if the request did" in {
-      val Return(requestSession) = runReader(authorization = None)
+      val Return((requestSession, _)) = runReader(authorization = None)
       assertResult(RequestSession(None))(requestSession)
     }
 
@@ -42,6 +42,13 @@ final class RequestReadersSpec extends UnitSpec {
       }
     }
 
+    "Result contains the compatible Accept header value" in {
+      val mediaType = MediaType("application", "json")
+      val produces = Seq((mediaType, identity[Unit] _))
+      val Return((_, responseContentType)) = runReader(produces = produces)
+      assertResult(mediaType)(responseContentType)
+    }
+
   }
 
 }
@@ -52,7 +59,7 @@ object RequestReadersSpec {
     accept: Option[String] = Some(MediaTypes.applicationJson.show),
     authorization: Option[String] = None,
     produces: Seq[(MediaType, Unit => Unit)] = Seq((MediaTypes.applicationJson, identity))
-  ): Try[RequestSession] = {
+  ): Try[(RequestSession, MediaType)] = {
     val request = RequestBuilder()
       .url("http://some.host")
       .setHeader("Accept", accept.toSeq)
@@ -60,8 +67,9 @@ object RequestReadersSpec {
       .buildGet()
 
     val reader = RequestReaders.testBaseReader[Unit](produces)
-    Await.result(reader(request).liftToTry)
-      .map { case (requestSession, _, _) => requestSession }
+    Await.result(reader(request).liftToTry).map { case (requestSession, _, responseContentType) =>
+      (requestSession, responseContentType)
+    }
   }
 
 }
