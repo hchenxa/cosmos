@@ -4,6 +4,8 @@ import com.mesosphere.cosmos.UnitSpec
 import com.mesosphere.cosmos.http.{Authorization, MediaType, MediaTypes, RequestSession}
 import com.twitter.finagle.http.RequestBuilder
 import com.twitter.util.{Await, Return, Try}
+import io.finch.RequestReader
+import org.scalatest.PrivateMethodTester
 
 final class RequestReadersSpec extends UnitSpec {
 
@@ -63,20 +65,23 @@ final class RequestReadersSpec extends UnitSpec {
 
 }
 
-object RequestReadersSpec {
+object RequestReadersSpec extends PrivateMethodTester {
+
+  type BaseReadValues[Res] = (RequestSession, Res => Res, MediaType)
 
   def runReader[Res](
     accept: Option[String] = Some(MediaTypes.applicationJson.show),
     authorization: Option[String] = None,
     produces: Seq[(MediaType, Res => Res)] = Seq((MediaTypes.applicationJson, identity[Res] _))
-  ): Try[(RequestSession, Res => Res, MediaType)] = {
+  ): Try[BaseReadValues[Res]] = {
     val request = RequestBuilder()
       .url("http://some.host")
       .setHeader("Accept", accept.toSeq)
       .setHeader("Authorization", authorization.toSeq)
       .buildGet()
 
-    val reader = RequestReaders.testBaseReader[Res](produces)
+    val baseReader = PrivateMethod[RequestReader[BaseReadValues[Res]]]('baseReader)
+    val reader = RequestReaders invokePrivate baseReader(produces)
     Await.result(reader(request).liftToTry)
   }
 
