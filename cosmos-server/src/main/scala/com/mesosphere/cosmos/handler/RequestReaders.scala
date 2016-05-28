@@ -53,7 +53,11 @@ object RequestReaders {
     produces: Seq[(MediaType, Res => Res)]
   ): RequestReader[(RequestSession, Res => Res, MediaType)] = {
     for {
-      _ <- header("Accept").as[MediaType]
+      _ <- header("Accept")
+        .as[MediaType]
+        .should("be on the whitelist") { accept =>
+          produces.exists { case (supported, _) => supported.isCompatibleWith(accept) }
+        }
       auth <- headerOption("Authorization")
     } yield {
       (RequestSession(auth.map(Authorization(_))), identity, MediaTypes.any)
