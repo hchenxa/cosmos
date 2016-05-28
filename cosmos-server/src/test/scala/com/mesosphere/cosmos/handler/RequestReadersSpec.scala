@@ -12,12 +12,12 @@ final class RequestReadersSpec extends UnitSpec {
   "Properties shared by all request readers" - {
 
     "Result contains Authorization if the request did" in {
-      val Return((requestSession, _)) = runReader(authorization = Some("53cr37"))
+      val Return((requestSession, _, _)) = runReader(authorization = Some("53cr37"))
       assertResult(RequestSession(Some(Authorization("53cr37"))))(requestSession)
     }
 
     "Result omits Authorization if the request did" in {
-      val Return((requestSession, _)) = runReader(authorization = None)
+      val Return((requestSession, _, _)) = runReader(authorization = None)
       assertResult(RequestSession(None))(requestSession)
     }
 
@@ -45,8 +45,18 @@ final class RequestReadersSpec extends UnitSpec {
     "Result contains the compatible Accept header value" in {
       val mediaType = MediaType("application", "json")
       val produces = Seq((mediaType, identity[Unit] _))
-      val Return((_, responseContentType)) = runReader(produces = produces)
+      val Return((_, _, responseContentType)) = runReader(produces = produces)
       assertResult(mediaType)(responseContentType)
+    }
+
+    "Result contains the function associated with the first compatible `produces` element" in {
+      val produces = Seq[(MediaType, Int => Int)](
+        (MediaType("text", "plain"), _ => 0),
+        (MediaTypes.applicationJson, _ => 1),
+        (MediaTypes.applicationJson, _ => 2)
+      )
+      val Return((_, responseFormatter, _)) = runReader(produces = produces)
+      assertResult(1)(responseFormatter(42))
     }
 
   }
@@ -55,21 +65,19 @@ final class RequestReadersSpec extends UnitSpec {
 
 object RequestReadersSpec {
 
-  def runReader(
+  def runReader[Res](
     accept: Option[String] = Some(MediaTypes.applicationJson.show),
     authorization: Option[String] = None,
-    produces: Seq[(MediaType, Unit => Unit)] = Seq((MediaTypes.applicationJson, identity))
-  ): Try[(RequestSession, MediaType)] = {
+    produces: Seq[(MediaType, Res => Res)] = Seq((MediaTypes.applicationJson, identity[Res] _))
+  ): Try[(RequestSession, Res => Res, MediaType)] = {
     val request = RequestBuilder()
       .url("http://some.host")
       .setHeader("Accept", accept.toSeq)
       .setHeader("Authorization", authorization.toSeq)
       .buildGet()
 
-    val reader = RequestReaders.testBaseReader[Unit](produces)
-    Await.result(reader(request).liftToTry).map { case (requestSession, _, responseContentType) =>
-      (requestSession, responseContentType)
-    }
+    val reader = RequestReaders.testBaseReader[Res](produces)
+    Await.result(reader(request).liftToTry)
   }
 
 }
