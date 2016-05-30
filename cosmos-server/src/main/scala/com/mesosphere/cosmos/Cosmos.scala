@@ -347,9 +347,13 @@ private[cosmos] object DigestACLProvider {
   def apply(userSecret: Option[(String, String)]): DigestACLProvider = {
     userSecret match {
       case Some((user, secret)) => {
-        val id = new Id("digest", s"$user:$secret")
-        val acl = new ACL(ZooDefs.Perms.ALL, id)
-        new DigestACLProvider(java.util.Arrays.asList(acl))
+        val userId = new Id("digest", s"$user:$secret")
+        val userAllAcl = new ACL(ZooDefs.Perms.ALL, userId)
+
+        val worldId = new Id("world", "anyone")
+        val worldReadAcl = new ACL(ZooDefs.Perms.READ, worldId)
+
+        new DigestACLProvider(java.util.Arrays.asList(userAllAcl, worldReadAcl))
       }
       case None =>
         new DigestACLProvider(new java.util.ArrayList[ACL]())
