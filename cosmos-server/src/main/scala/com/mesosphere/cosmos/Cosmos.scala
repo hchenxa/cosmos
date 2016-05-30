@@ -1,5 +1,7 @@
 package com.mesosphere.cosmos
 
+import scala.annotation.tailrec
+import scala.collection.JavaConverters._
 import java.nio.file.Path
 import com.netaporter.uri.Uri
 import com.twitter.finagle.Service
@@ -273,7 +275,8 @@ object Cosmos extends FinchServer {
       }
 
       if (zookeeperAclAddToExisting()) {
-        updateAcls(zkClient, aclProvider)
+        val root = zkUri.path.stripPrefix("/")
+        updateAcls(zkClient, aclProvider, List(root))
       }
 
       val sourcesStorage = new ZooKeeperStorage(zkClient)()
@@ -308,11 +311,24 @@ object Cosmos extends FinchServer {
     )(statsReceiver)
   }
 
+  @tailrec
   private[cosmos] def updateAcls(
     zkClient: CuratorFramework,
-    aclProvider: ACLProvider
-  ): Unit = {
-    // TODO(tyler) recursively update acls
+    aclProvider: ACLProvider,
+    paths: List[String]
+  ): Unit = paths match {
+    case child :: otherChildren => {
+      val acls = aclProvider.getAclForPath(child)
+
+      zkClient.setACL()
+        .withACL(acls)
+        .forPath(child)
+
+      val newChildren = zkClient.getChildren.forPath(child).asScala.toList
+
+      updateAcls(zkClient, aclProvider, newChildren ++ otherChildren)
+    }
+    case _ => {}
   }
 }
 
