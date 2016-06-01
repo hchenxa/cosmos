@@ -6,7 +6,7 @@ import com.mesosphere.cosmos.repository.PackageCollection
 import com.twitter.util.Future
 
 private[cosmos] final class PackageRenderHandler(packageCache: PackageCollection)(implicit
-  codec: EndpointCodec[RenderRequest, RenderResponse]
+  codec: EndpointCodec[RenderRequest, RenderResponse, RenderResponse]
 ) extends EndpointHandler {
 
   import PackageInstallHandler._

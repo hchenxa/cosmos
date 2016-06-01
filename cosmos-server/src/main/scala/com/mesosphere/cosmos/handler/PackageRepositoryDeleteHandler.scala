@@ -7,9 +7,11 @@ import com.mesosphere.cosmos.model.{PackageRepositoryDeleteRequest, PackageRepos
 import com.mesosphere.cosmos.repository.PackageSourcesStorage
 import com.twitter.util.Future
 
-private[cosmos] final class PackageRepositoryDeleteHandler(sourcesStorage: PackageSourcesStorage)
-  (implicit codec: EndpointCodec[PackageRepositoryDeleteRequest, PackageRepositoryDeleteResponse])
-  extends EndpointHandler {
+private[cosmos] final class PackageRepositoryDeleteHandler(
+  sourcesStorage: PackageSourcesStorage
+)(implicit
+  codec: EndpointCodec[PackageRepositoryDeleteRequest, PackageRepositoryDeleteResponse, PackageRepositoryDeleteResponse]
+) extends EndpointHandler {
 
   import PackageRepositoryDeleteHandler._
 

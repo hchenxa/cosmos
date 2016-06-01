@@ -19,7 +19,7 @@ import io.circe.parse._
 private[cosmos] final class ListHandler(
   adminRouter: AdminRouter,
   repositories: (Uri) => Future[Option[Repository]]
-)(implicit codec: EndpointCodec[ListRequest, ListResponse]) extends EndpointHandler {
+)(implicit codec: EndpointCodec[ListRequest, ListResponse, ListResponse]) extends EndpointHandler {
 
   override def apply(request: ListRequest)(implicit session: RequestSession): Future[ListResponse] = {
     adminRouter.listApps().flatMap { applications =>

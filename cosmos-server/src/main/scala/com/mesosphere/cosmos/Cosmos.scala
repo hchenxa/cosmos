@@ -21,16 +21,16 @@ import org.apache.curator.framework.CuratorFrameworkFactory
 import org.apache.curator.retry.ExponentialBackoffRetry
 
 private[cosmos] final class Cosmos(
-  uninstallHandler: EndpointHandler[UninstallRequest, UninstallResponse],
-  packageInstallHandler: EndpointHandler[InstallRequest, InstallResponse],
-  packageRenderHandler: EndpointHandler[RenderRequest, RenderResponse],
-  packageSearchHandler: EndpointHandler[SearchRequest, SearchResponse],
-  packageDescribeHandler: EndpointHandler[DescribeRequest, DescribeResponse],
-  packageListVersionsHandler: EndpointHandler[ListVersionsRequest, ListVersionsResponse],
-  listHandler: EndpointHandler[ListRequest, ListResponse],
-  listRepositoryHandler: EndpointHandler[PackageRepositoryListRequest, PackageRepositoryListResponse],
-  addRepositoryHandler: EndpointHandler[PackageRepositoryAddRequest, PackageRepositoryAddResponse],
-  deleteRepositoryHandler: EndpointHandler[PackageRepositoryDeleteRequest, PackageRepositoryDeleteResponse],
+  uninstallHandler: EndpointHandler[UninstallRequest, UninstallResponse, UninstallResponse],
+  packageInstallHandler: EndpointHandler[InstallRequest, InstallResponse, InstallResponse],
+  packageRenderHandler: EndpointHandler[RenderRequest, RenderResponse, RenderResponse],
+  packageSearchHandler: EndpointHandler[SearchRequest, SearchResponse, SearchResponse],
+  packageDescribeHandler: EndpointHandler[DescribeRequest, DescribeResponse, DescribeResponse],
+  packageListVersionsHandler: EndpointHandler[ListVersionsRequest, ListVersionsResponse, ListVersionsResponse],
+  listHandler: EndpointHandler[ListRequest, ListResponse, ListResponse],
+  listRepositoryHandler: EndpointHandler[PackageRepositoryListRequest, PackageRepositoryListResponse, PackageRepositoryListResponse],
+  addRepositoryHandler: EndpointHandler[PackageRepositoryAddRequest, PackageRepositoryAddResponse, PackageRepositoryAddResponse],
+  deleteRepositoryHandler: EndpointHandler[PackageRepositoryDeleteRequest, PackageRepositoryDeleteResponse, PackageRepositoryDeleteResponse],
   capabilitiesHandler: CapabilitiesHandler
 )(implicit statsReceiver: StatsReceiver = NullStatsReceiver) {
   lazy val logger = org.slf4j.LoggerFactory.getLogger(classOf[Cosmos])

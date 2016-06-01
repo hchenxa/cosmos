@@ -8,23 +8,23 @@ import io.finch.{DecodeRequest, RequestReader}
 import scala.reflect.ClassTag
 
 /** Provides everything needed to decode requests and encode responses for an endpoint. */
-final case class EndpointCodec[Request, Response](
-  requestReader: RequestReader[EndpointContext[Request, Response]],
-  responseEncoder: Encoder[Response]
+final case class EndpointCodec[Request, Response, VersionedResponse](
+  requestReader: RequestReader[EndpointContext[Request, Response, VersionedResponse]],
+  responseEncoder: Encoder[VersionedResponse]
 )
 
 object EndpointCodec {
 
   implicit def capabilitiesCodec(implicit
     encoder: Encoder[CapabilitiesResponse]
-  ): EndpointCodec[Unit, CapabilitiesResponse] = {
+  ): EndpointCodec[Unit, CapabilitiesResponse, CapabilitiesResponse] = {
     EndpointCodec(RequestReaders.noBody(producesOnly(MediaTypes.CapabilitiesResponse)), encoder)
   }
 
   implicit def packageListCodec(implicit
     decoder: DecodeRequest[ListRequest],
     encoder: Encoder[ListResponse]
-  ): EndpointCodec[ListRequest, ListResponse] = standardCodec(
+  ): EndpointCodec[ListRequest, ListResponse, ListResponse] = standardCodec(
     accepts = MediaTypes.ListRequest,
     produces = producesOnly(MediaTypes.ListResponse)
   )
@@ -32,7 +32,7 @@ object EndpointCodec {
   implicit def packageListVersionsCodec(implicit
     decoder: DecodeRequest[ListVersionsRequest],
     encoder: Encoder[ListVersionsResponse]
-  ): EndpointCodec[ListVersionsRequest, ListVersionsResponse] = standardCodec(
+  ): EndpointCodec[ListVersionsRequest, ListVersionsResponse, ListVersionsResponse] = standardCodec(
     accepts = MediaTypes.ListVersionsRequest,
     produces = producesOnly(MediaTypes.ListVersionsResponse)
   )
@@ -40,7 +40,7 @@ object EndpointCodec {
   implicit def packageDescribeCodec(implicit
     decoder: DecodeRequest[DescribeRequest],
     encoder: Encoder[DescribeResponse]
-  ): EndpointCodec[DescribeRequest, DescribeResponse] = standardCodec(
+  ): EndpointCodec[DescribeRequest, DescribeResponse, DescribeResponse] = standardCodec(
     accepts = MediaTypes.DescribeRequest,
     produces = producesOnly(MediaTypes.DescribeResponse)
   )
@@ -48,7 +48,7 @@ object EndpointCodec {
   implicit def packageInstallCodec(implicit
     decoder: DecodeRequest[InstallRequest],
     encoder: Encoder[InstallResponse]
-  ): EndpointCodec[InstallRequest, InstallResponse] = standardCodec(
+  ): EndpointCodec[InstallRequest, InstallResponse, InstallResponse] = standardCodec(
     accepts = MediaTypes.InstallRequest,
     produces = producesOnly(MediaTypes.InstallResponse)
   )
@@ -56,7 +56,7 @@ object EndpointCodec {
   implicit def packageRenderCodec(implicit
     decoder: DecodeRequest[RenderRequest],
     encoder: Encoder[RenderResponse]
-  ): EndpointCodec[RenderRequest, RenderResponse] = standardCodec(
+  ): EndpointCodec[RenderRequest, RenderResponse, RenderResponse] = standardCodec(
     accepts = MediaTypes.RenderRequest,
     produces = producesOnly(MediaTypes.RenderResponse)
   )
@@ -64,7 +64,11 @@ object EndpointCodec {
   implicit def packageRepositoryAddCodec(implicit
     decoder: DecodeRequest[PackageRepositoryAddRequest],
     encoder: Encoder[PackageRepositoryAddResponse]
-  ): EndpointCodec[PackageRepositoryAddRequest, PackageRepositoryAddResponse] = standardCodec(
+  ): EndpointCodec[
+    PackageRepositoryAddRequest,
+    PackageRepositoryAddResponse,
+    PackageRepositoryAddResponse
+  ] = standardCodec(
     accepts = MediaTypes.PackageRepositoryAddRequest,
     produces = producesOnly(MediaTypes.PackageRepositoryAddResponse)
   )
@@ -72,7 +76,11 @@ object EndpointCodec {
   implicit def packageRepositoryDeleteCodec(implicit
     decoder: DecodeRequest[PackageRepositoryDeleteRequest],
     encoder: Encoder[PackageRepositoryDeleteResponse]
-  ): EndpointCodec[PackageRepositoryDeleteRequest, PackageRepositoryDeleteResponse] = standardCodec(
+  ): EndpointCodec[
+    PackageRepositoryDeleteRequest,
+    PackageRepositoryDeleteResponse,
+    PackageRepositoryDeleteResponse
+  ] = standardCodec(
     accepts = MediaTypes.PackageRepositoryDeleteRequest,
     produces = producesOnly(MediaTypes.PackageRepositoryDeleteResponse)
   )
@@ -80,7 +88,11 @@ object EndpointCodec {
   implicit def packageRepositoryListCodec(implicit
     decoder: DecodeRequest[PackageRepositoryListRequest],
     encoder: Encoder[PackageRepositoryListResponse]
-  ): EndpointCodec[PackageRepositoryListRequest, PackageRepositoryListResponse] = standardCodec(
+  ): EndpointCodec[
+    PackageRepositoryListRequest,
+    PackageRepositoryListResponse,
+    PackageRepositoryListResponse
+  ] = standardCodec(
     accepts = MediaTypes.PackageRepositoryListRequest,
     produces = producesOnly(MediaTypes.PackageRepositoryListResponse)
   )
@@ -88,7 +100,7 @@ object EndpointCodec {
   implicit def packageSearchCodec(implicit
     decoder: DecodeRequest[SearchRequest],
     encoder: Encoder[SearchResponse]
-  ): EndpointCodec[SearchRequest, SearchResponse] = standardCodec(
+  ): EndpointCodec[SearchRequest, SearchResponse, SearchResponse] = standardCodec(
     accepts = MediaTypes.SearchRequest,
     produces = producesOnly(MediaTypes.SearchResponse)
   )
@@ -96,7 +108,7 @@ object EndpointCodec {
   implicit def packageUninstallCodec(implicit
     decoder: DecodeRequest[UninstallRequest],
     encoder: Encoder[UninstallResponse]
-  ): EndpointCodec[UninstallRequest, UninstallResponse] = standardCodec(
+  ): EndpointCodec[UninstallRequest, UninstallResponse, UninstallResponse] = standardCodec(
     accepts = MediaTypes.UninstallRequest,
     produces = producesOnly(MediaTypes.UninstallResponse)
   )
@@ -108,8 +120,8 @@ object EndpointCodec {
     decoder: DecodeRequest[Request],
     encoder: Encoder[Response],
     requestClassTag: ClassTag[Request]
-  ): EndpointCodec[Request, Response] = {
-    EndpointCodec(RequestReaders.standard[Request, Response](accepts, produces), encoder)
+  ): EndpointCodec[Request, Response, Response] = {
+    EndpointCodec(RequestReaders.standard[Request, Response, Response](accepts, produces), encoder)
   }
 
   private[this] def producesOnly[Response](

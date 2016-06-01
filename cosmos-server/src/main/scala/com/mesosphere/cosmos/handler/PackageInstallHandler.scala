@@ -23,7 +23,9 @@ import scala.collection.JavaConverters._
 private[cosmos] final class PackageInstallHandler(
   packageCache: PackageCollection,
   packageRunner: PackageRunner
-)(implicit codec: EndpointCodec[InstallRequest, InstallResponse]) extends EndpointHandler {
+)(implicit
+  codec: EndpointCodec[InstallRequest, InstallResponse, InstallResponse]
+) extends EndpointHandler {
 
   import PackageInstallHandler._
 
