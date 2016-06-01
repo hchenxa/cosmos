@@ -122,13 +122,13 @@ object RequestReadersSpec {
   trait RequestReaderFactory[Req] {
     def apply[Res](
       produces: Seq[(MediaType, Res => Res)]
-    ): RequestReader[EndpointContext[Req, Res]]
+    ): RequestReader[EndpointContext[Req, Res, Res]]
   }
 
   object NoBodyReaderFactory extends RequestReaderFactory[Unit] {
     override def apply[Res](
       produces: Seq[(MediaType, Res => Res)]
-    ): RequestReader[EndpointContext[Unit, Res]] = {
+    ): RequestReader[EndpointContext[Unit, Res, Res]] = {
       RequestReaders.noBody(produces)
     }
   }
@@ -136,7 +136,7 @@ object RequestReadersSpec {
   object StandardReaderFactory extends RequestReaderFactory[String] {
     override def apply[Res](
       produces: Seq[(MediaType, Res => Res)]
-    ): RequestReader[EndpointContext[String, Res]] = {
+    ): RequestReader[EndpointContext[String, Res, Res]] = {
       RequestReaders.standard(
         accepts = MediaTypes.applicationJson,
         produces = produces

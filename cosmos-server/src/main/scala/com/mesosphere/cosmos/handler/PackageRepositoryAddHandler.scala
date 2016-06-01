@@ -8,9 +8,11 @@ import com.mesosphere.cosmos.model.PackageRepositoryAddResponse
 import com.mesosphere.cosmos.repository.PackageSourcesStorage
 import com.twitter.util.Future
 
-private[cosmos] final class PackageRepositoryAddHandler(sourcesStorage: PackageSourcesStorage)
-  (implicit codec: EndpointCodec[PackageRepositoryAddRequest, PackageRepositoryAddResponse])
-  extends EndpointHandler {
+private[cosmos] final class PackageRepositoryAddHandler(
+  sourcesStorage: PackageSourcesStorage
+)(implicit
+  codec: EndpointCodec[PackageRepositoryAddRequest, PackageRepositoryAddResponse, PackageRepositoryAddResponse]
+) extends EndpointHandler {
 
   override def apply(
     request: PackageRepositoryAddRequest

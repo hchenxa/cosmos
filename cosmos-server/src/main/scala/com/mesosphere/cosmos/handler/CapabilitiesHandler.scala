@@ -5,7 +5,7 @@ import com.mesosphere.cosmos.model.{CapabilitiesResponse, Capability}
 import com.twitter.util.Future
 
 private[cosmos] final class CapabilitiesHandler(implicit
-  codec: EndpointCodec[Unit, CapabilitiesResponse]
+  codec: EndpointCodec[Unit, CapabilitiesResponse, CapabilitiesResponse]
 ) extends EndpointHandler {
 
   private[this] val response = CapabilitiesResponse(List(Capability("PACKAGE_MANAGEMENT")))

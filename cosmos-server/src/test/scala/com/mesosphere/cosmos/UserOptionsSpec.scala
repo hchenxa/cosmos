@@ -187,8 +187,8 @@ final class UserOptionsSpec extends UnitSpec {
   }
 
   private[this] def constHandler[Request, Response](resp: Response)(implicit
-    codec: EndpointCodec[Request, Response]
-  ): EndpointHandler[Request, Response] = {
+    codec: EndpointCodec[Request, Response, Response]
+  ): EndpointHandler[Request, Response, Response] = {
     new EndpointHandler {
       override def apply(v1: Request)(implicit session: RequestSession): Future[Response] = {
         Future.value(resp)

@@ -6,7 +6,7 @@ import com.mesosphere.cosmos.repository.PackageCollection
 import com.twitter.util.Future
 
 private[cosmos] final class PackageSearchHandler(packageCache: PackageCollection)(implicit
-  codec: EndpointCodec[SearchRequest, SearchResponse]
+  codec: EndpointCodec[SearchRequest, SearchResponse, SearchResponse]
 ) extends EndpointHandler {
 
   override def apply(request: SearchRequest)(implicit session: RequestSession): Future[SearchResponse] = {

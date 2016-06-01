@@ -6,7 +6,7 @@ import com.mesosphere.cosmos.repository.PackageCollection
 import com.twitter.util.Future
 
 private[cosmos] class ListVersionsHandler(packageCache: PackageCollection)(implicit
-  codec: EndpointCodec[ListVersionsRequest, ListVersionsResponse]
+  codec: EndpointCodec[ListVersionsRequest, ListVersionsResponse, ListVersionsResponse]
 ) extends EndpointHandler {
 
   override def apply(request: ListVersionsRequest)(implicit session: RequestSession): Future[ListVersionsResponse] = {

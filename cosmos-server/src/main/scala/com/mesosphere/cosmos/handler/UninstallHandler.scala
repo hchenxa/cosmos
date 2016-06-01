@@ -12,7 +12,9 @@ import com.twitter.util.Future
 private[cosmos] final class UninstallHandler(
   adminRouter: AdminRouter,
   packageCache: PackageCollection
-)(implicit codec: EndpointCodec[UninstallRequest, UninstallResponse]) extends EndpointHandler {
+)(implicit
+  codec: EndpointCodec[UninstallRequest, UninstallResponse, UninstallResponse]
+) extends EndpointHandler {
 
   private type FwIds = List[String]
 

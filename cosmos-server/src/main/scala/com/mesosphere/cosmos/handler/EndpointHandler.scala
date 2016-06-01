@@ -8,8 +8,8 @@ import io.circe.syntax._
 import io.finch._
 import shapeless.HNil
 
-private[cosmos] abstract class EndpointHandler[Request, Response](implicit
-  codec: EndpointCodec[Request, Response]
+private[cosmos] abstract class EndpointHandler[Request, Response, VersionedResponse](implicit
+  codec: EndpointCodec[Request, Response, VersionedResponse]
 ) {
 
   import EndpointHandler._
@@ -20,7 +20,7 @@ private[cosmos] abstract class EndpointHandler[Request, Response](implicit
     val endpointPath = path.foldLeft[Endpoint[HNil]](/)(_ / _)
 
     endpoint(method)(endpointPath ? codec.requestReader) {
-      context: EndpointContext[Request, Response] =>
+      context: EndpointContext[Request, Response, VersionedResponse] =>
 
         this(context.requestBody)(context.session).map { response =>
           val encodedResponse = context.responseFormatter(response)
