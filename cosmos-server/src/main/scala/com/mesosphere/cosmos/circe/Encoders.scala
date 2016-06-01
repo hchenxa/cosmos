@@ -198,10 +198,11 @@ object Encoders {
 
   implicit val encodeCosmosError: Encoder[CosmosError] = deriveFor[CosmosError].encoder
 
-  implicit val encodeExampleVersionedAdt: Encoder[ExampleVersionedAdt] = {
-    val encoder = deriveFor[ExampleVersionedAdt].encoder
-    Encoder.instance(encoder.encodeObject(_).values.headOption.getOrElse(Json.obj()))
-  }
+  implicit val encodeExampleVersionedAdt: Encoder[ExampleVersionedAdt] = deriveFor[ExampleVersionedAdt].encoder
+//  implicit val encodeExampleVersionedAdt: Encoder[ExampleVersionedAdt] = {
+//    val encoder = deriveFor[ExampleVersionedAdt].encoder
+//    Encoder.instance(encoder.encodeObject(_).values.headOption.getOrElse(Json.obj()))
+//  }
 
   private[this] def exceptionErrorResponse(t: Throwable): ErrorResponse = t match {
     case Error.NotPresent(item) =>
