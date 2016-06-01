@@ -5,14 +5,16 @@ import com.mesosphere.cosmos._
 import com.mesosphere.cosmos.model.{AppId, PackageRepository}
 import com.mesosphere.universe.Images
 import com.netaporter.uri.Uri
+import io.circe._
 import io.circe.parse._
 import io.circe.syntax._
-import io.circe.{Decoder, Json, JsonObject, ParsingFailure}
 import org.scalatest.FreeSpec
 
-class EncodersDecodersSpec extends FreeSpec {
+final class EncodersDecodersSpec extends FreeSpec {
+
   import Decoders._
   import Encoders._
+  import EncodersDecodersSpec._
 
   "Images" - {
     val json = Json.obj(
@@ -37,10 +39,10 @@ class EncodersDecodersSpec extends FreeSpec {
       assertResult(json)(images.asJson)
     }
     "decode" in {
-      assertResult(images)(decodeJson[Images](json))
+      assertResult(images)(unsafeDecodeJson[Images](json))
     }
     "round-trip" in {
-      assertResult(images)(decodeJson[Images](images.asJson))
+      assertResult(images)(unsafeDecodeJson[Images](images.asJson))
     }
   }
 
@@ -126,7 +128,41 @@ class EncodersDecodersSpec extends FreeSpec {
     }
   }
 
-  private[this] def decodeJson[A: Decoder](json: Json)(implicit decoder: Decoder[A]): A = {
+  "ExampleVersionedAdt is encoded without class labels" - {
+    "because the version can be determined from the Content-Type response header" - {
+
+      "encoding of Version0" in {
+        assertResult(Json.obj()) {
+          (Version0: ExampleVersionedAdt).asJson
+        }
+      }
+
+      "encoding of Version1" in {
+        assertResult(Json.obj("a" -> "foo".asJson)) {
+          (Version1("foo"): ExampleVersionedAdt).asJson
+        }
+      }
+
+      "encoding of Version2" in {
+        assertResult(Json.obj("a" -> "bar".asJson, "b" -> 42.asJson)) {
+          (Version2("bar", 42): ExampleVersionedAdt).asJson
+        }
+      }
+
+      "encoding of Version3" in {
+        assertResult(Json.obj("b" -> 123.asJson, "c" -> 2.18282.asJson)) {
+          (Version3(123, 2.18282): ExampleVersionedAdt).asJson
+        }
+      }
+
+    }
+  }
+
+}
+
+object EncodersDecodersSpec {
+
+  private def unsafeDecodeJson[A: Decoder](json: Json)(implicit decoder: Decoder[A]): A = {
     decoder.decodeJson(json).getOrElse(throw new AssertionError("Unable to decode"))
   }
 
