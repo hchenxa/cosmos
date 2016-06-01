@@ -2,22 +2,15 @@ package com.mesosphere.cosmos.handler
 
 import cats.Eval
 import cats.data.Xor
-import com.mesosphere.cosmos.CoproductEndpointSpec.{Bar, Foo}
 import com.mesosphere.cosmos.UnitSpec
-import com.mesosphere.cosmos.handler.EndpointHandlerSpec.FoobarHandler
 import com.mesosphere.cosmos.http.{Authorization, MediaType, MediaTypes, RequestSession}
 import com.twitter.finagle.http.{Method, RequestBuilder, Status}
-import com.twitter.io.Buf
-import com.twitter.util.{Await, Future, Try}
-import io.circe.generic.semiauto
+import com.twitter.util.{Await, Future}
 import io.circe.syntax._
 import io.circe.{Decoder, Encoder, Json}
 import io.finch.{Input, Output, RequestReader}
-import shapeless.{:+:, CNil, Inl, Inr}
 
 final class EndpointHandlerSpec extends UnitSpec {
-
-  import EndpointHandlerSpec._
 
   "EndpointHandler" - {
 
@@ -285,71 +278,6 @@ final class EndpointHandlerSpec extends UnitSpec {
         Await.result(eval.value)
       }
 
-    }
-
-    "versioned response types" - {
-
-      "Foo/Bar service" in {
-        val handler = new FoobarHandler
-        val endpoint = handler.route(Method.Post, "package", "foobar")
-
-        val v1Request = RequestBuilder()
-          .url("http://some.host/package/foobar")
-          .setHeader("Accept", "application/json;version=v1")
-          .setHeader("Content-Type", MediaTypes.applicationJson.show)
-          .buildPost(Buf.Utf8("42"))
-
-        assertResult(Some(Json.obj("value" -> 42.asJson))) {
-          endpoint(Input(v1Request)).map { case (_, eval) =>
-            Await.result(eval.value).value
-          }
-        }
-      }
-
-    }
-
-  }
-
-}
-
-object EndpointHandlerSpec {
-
-  final case class FoobarResponse(foo: Int, bar: Double)
-
-  sealed trait VersionedFoobarResponse
-  final case class Foo(value: Int) extends VersionedFoobarResponse
-  final case class Bar(value: Double) extends VersionedFoobarResponse
-
-  def versionedJson(version: Int): MediaType = {
-    MediaTypes.applicationJson.copy(parameters = Some(Map("version" -> s"v$version")))
-  }
-
-  val FoobarMediaTypeV1: MediaType = versionedJson(1)
-  val FoobarMediaTypeV2: MediaType = versionedJson(2)
-
-  def foobarV1(foobar: FoobarResponse): Foo = Foo(foobar.foo)
-  def foobarV2(foobar: FoobarResponse): Bar = Bar(foobar.bar)
-
-  val foobarProduces: Seq[(MediaType, FoobarResponse => VersionedFoobarResponse)] = Seq(
-    FoobarMediaTypeV1 -> foobarV1,
-    FoobarMediaTypeV2 -> foobarV2
-  )
-
-  implicit val versionedFoobarResponseEncoder: Encoder[VersionedFoobarResponse] = {
-    val encoder = semiauto.deriveFor[VersionedFoobarResponse].encoder
-    Encoder.instance(encoder(_).asObject.flatMap(_.values.headOption).getOrElse(Json.empty))
-  }
-
-  def foobarCodec(implicit
-    encoder: Encoder[VersionedFoobarResponse]
-  ): EndpointCodec[String, FoobarResponse, VersionedFoobarResponse] = {
-    EndpointCodec(RequestReaders.standard(MediaTypes.applicationJson, foobarProduces), encoder)
-  }
-
-  final class FoobarHandler extends EndpointHandler()(foobarCodec) {
-
-    override def apply(request: String)(implicit session: RequestSession): Future[FoobarResponse] = {
-      Future(FoobarResponse(request.toInt, request.toDouble))
     }
 
   }
