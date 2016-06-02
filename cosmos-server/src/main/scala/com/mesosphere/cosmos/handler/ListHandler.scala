@@ -5,7 +5,7 @@ import java.util.Base64
 
 import cats.data.Xor
 import com.mesosphere.cosmos.circe.Decoders._
-import com.mesosphere.cosmos.http.RequestSession
+import com.mesosphere.cosmos.http.{MediaTypes, RequestSession}
 import com.mesosphere.cosmos.model.thirdparty.marathon.MarathonApp
 import com.mesosphere.cosmos.model.{Installation, InstalledPackageInformation, ListRequest, ListResponse}
 import com.mesosphere.cosmos.repository.Repository
@@ -14,12 +14,22 @@ import com.mesosphere.universe.{PackageDetails, ReleaseVersion}
 import com.netaporter.uri.Uri
 import com.netaporter.uri.dsl.stringToUri
 import com.twitter.util.Future
+import io.circe.Encoder
 import io.circe.parse._
+import io.finch.DecodeRequest
 
 private[cosmos] final class ListHandler(
   adminRouter: AdminRouter,
   repositories: (Uri) => Future[Option[Repository]]
-)(implicit codec: EndpointCodec[ListRequest, ListResponse, ListResponse]) extends EndpointHandler {
+)(implicit
+  decoder: DecodeRequest[ListRequest],
+  encoder: Encoder[ListResponse]
+) extends EndpointHandler(
+  requestReader = RequestReaders.standard[ListRequest, ListResponse](
+    accepts = MediaTypes.ListRequest,
+    produces = MediaTypes.ListResponse
+  )
+) {
 
   override def apply(request: ListRequest)(implicit session: RequestSession): Future[ListResponse] = {
     adminRouter.listApps().flatMap { applications =>

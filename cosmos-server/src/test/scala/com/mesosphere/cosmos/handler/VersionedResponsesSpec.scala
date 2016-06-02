@@ -62,19 +62,6 @@ object VersionedResponsesSpec {
     Encoders.removeClassLabelsFromEncoding(semiauto.deriveFor[VersionedFoobarResponse].encoder)
   }
 
-  val foobarCodec: EndpointCodec[String, FoobarResponse, VersionedFoobarResponse] = {
-    EndpointCodec(
-      requestReader = RequestReaders.standard(
-        accepts = MediaTypes.applicationJson,
-        produces = Seq(
-          Foo.MediaType -> Foo.fromGenericResponse,
-          Bar.MediaType -> Bar.fromGenericResponse
-        )
-      ),
-      responseEncoder = versionedFoobarResponseEncoder
-    )
-  }
-
   val endpointPath: Seq[String] = Seq("package", "foobar")
 
   def buildInput(acceptHeader: MediaType, body: String): Input = {
@@ -92,7 +79,15 @@ object VersionedResponsesSpec {
     Await.result(eval.value).value
   }
 
-  object FoobarHandler extends EndpointHandler()(foobarCodec) {
+  object FoobarHandler extends EndpointHandler(
+    requestReader = RequestReaders.standard[String, FoobarResponse, VersionedFoobarResponse](
+      accepts = MediaTypes.applicationJson,
+      produces = Seq(
+        Foo.MediaType -> Foo.fromGenericResponse,
+        Bar.MediaType -> Bar.fromGenericResponse
+      )
+    )
+  ) {
 
     override def apply(request: String)(implicit session: RequestSession): Future[FoobarResponse] = {
       val asInt = Try(request.toInt).getOrElse(0)

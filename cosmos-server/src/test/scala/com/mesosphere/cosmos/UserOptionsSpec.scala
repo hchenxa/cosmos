@@ -55,7 +55,6 @@ final class UserOptionsSpec extends UnitSpec {
         // these two imports provide the implicit DecodeRequest instances needed to instantiate Cosmos
         import com.mesosphere.cosmos.circe.Decoders._
         import com.mesosphere.cosmos.circe.Encoders._
-        import com.mesosphere.cosmos.test.TestUtil.Anonymous
         import io.finch.circe._
         val cosmos = new Cosmos(
           constHandler(UninstallResponse(Nil)),
@@ -187,9 +186,16 @@ final class UserOptionsSpec extends UnitSpec {
   }
 
   private[this] def constHandler[Request, Response](resp: Response)(implicit
-    codec: EndpointCodec[Request, Response, Response]
+    decoder: DecodeRequest[Request],
+    encoder: Encoder[Response],
+    requestClassTag: ClassTag[Request]
   ): EndpointHandler[Request, Response, Response] = {
-    new EndpointHandler {
+    new EndpointHandler(
+      requestReader = RequestReaders.standard[Request, Response](
+        accepts = MediaTypes.applicationJson,
+        produces = MediaTypes.applicationJson
+      )
+    ) {
       override def apply(v1: Request)(implicit session: RequestSession): Future[Response] = {
         Future.value(resp)
       }

@@ -95,96 +95,92 @@ final class EndpointHandlerSpec extends UnitSpec {
 
       }
 
-      "codec member" - {
+      "requestReader constructor parameter" - {
 
-        "requestReader" - {
+        "requestBody is passed to apply" - {
 
-          "requestBody is passed to apply" - {
-
-            "int value" in {
-              val result = callEndpoint(buildRequestBodyHandler(requestBody = 42))
-              val responseBody = extractBody[Int](result)
-              assertResult(42)(responseBody)
-            }
-
-            "string value" in {
-              val result = callEndpoint(buildRequestBodyHandler(requestBody = "hello world"))
-              val responseBody = extractBody[String](result)
-              assertResult("hello world")(responseBody)
-            }
-
-          }
-
-          "requestSession is passed to apply" - {
-            "Some value" in {
-              val result = callWithRequestSession(RequestSession(Some(Authorization("53cr37"))))
-              val responseBody = extractBody[Option[String]](result)
-              assertResult(Some("53cr37"))(responseBody)
-            }
-            "None" in {
-              val result = callWithRequestSession(RequestSession(None))
-              val responseBody = extractBody[Option[String]](result)
-              assertResult(None)(responseBody)
-            }
-
-            def callWithRequestSession(session: RequestSession): EndpointResult = {
-              callEndpoint(buildRequestSessionHandler(session))
-            }
-          }
-
-          "responseFormatter modifies the response" - {
-            "plus three" in {
-              val handler = buildRequestBodyHandler[Int](requestBody = 5, responseFormatter = _ + 3)
-              val result = callEndpoint(handler)
-              val responseBody = extractBody[Int](result)
-              assertResult(8)(responseBody)
-            }
-            "times three" in {
-              val handler = buildRequestBodyHandler[Int](requestBody = 5, responseFormatter = _ * 3)
-              val result = callEndpoint(handler)
-              val responseBody = extractBody[Int](result)
-              assertResult(15)(responseBody)
-            }
-          }
-
-          "responseContentType is sent with the response" - {
-            "application/json" in {
-              val result = callEndpoint(buildRequestBodyHandler(
-                requestBody = (),
-                responseContentType = MediaTypes.applicationJson
-              ))
-
-              val contentType = extractContentType(result)
-              assertResult(MediaTypes.applicationJson.show)(contentType)
-            }
-            "text/plain" in {
-              val result = callEndpoint(buildRequestBodyHandler(
-                requestBody = (),
-                responseContentType = MediaType("text", "plain")
-              ))
-
-              val contentType = extractContentType(result)
-              assertResult(MediaType("text", "plain").show)(contentType)
-            }
-          }
-
-        }
-
-        "responseEncoder" - {
-          "int" in {
-            val encoder = Encoder.instance[Unit](_ => 42.asJson)
-            val result = callEndpoint(buildRequestBodyHandler[Unit](())(encoder))
+          "int value" in {
+            val result = callEndpoint(buildRequestBodyHandler(requestBody = 42))
             val responseBody = extractBody[Int](result)
             assertResult(42)(responseBody)
           }
-          "string" in {
-            val encoder = Encoder.instance[Unit](_ => "hello world".asJson)
-            val result = callEndpoint(buildRequestBodyHandler[Unit](())(encoder))
+
+          "string value" in {
+            val result = callEndpoint(buildRequestBodyHandler(requestBody = "hello world"))
             val responseBody = extractBody[String](result)
             assertResult("hello world")(responseBody)
           }
+
         }
 
+        "requestSession is passed to apply" - {
+          "Some value" in {
+            val result = callWithRequestSession(RequestSession(Some(Authorization("53cr37"))))
+            val responseBody = extractBody[Option[String]](result)
+            assertResult(Some("53cr37"))(responseBody)
+          }
+          "None" in {
+            val result = callWithRequestSession(RequestSession(None))
+            val responseBody = extractBody[Option[String]](result)
+            assertResult(None)(responseBody)
+          }
+
+          def callWithRequestSession(session: RequestSession): EndpointResult = {
+            callEndpoint(buildRequestSessionHandler(session))
+          }
+        }
+
+        "responseFormatter modifies the response" - {
+          "plus three" in {
+            val handler = buildRequestBodyHandler[Int](requestBody = 5, responseFormatter = _ + 3)
+            val result = callEndpoint(handler)
+            val responseBody = extractBody[Int](result)
+            assertResult(8)(responseBody)
+          }
+          "times three" in {
+            val handler = buildRequestBodyHandler[Int](requestBody = 5, responseFormatter = _ * 3)
+            val result = callEndpoint(handler)
+            val responseBody = extractBody[Int](result)
+            assertResult(15)(responseBody)
+          }
+        }
+
+        "responseContentType is sent with the response" - {
+          "application/json" in {
+            val result = callEndpoint(buildRequestBodyHandler(
+              requestBody = (),
+              responseContentType = MediaTypes.applicationJson
+            ))
+
+            val contentType = extractContentType(result)
+            assertResult(MediaTypes.applicationJson.show)(contentType)
+          }
+          "text/plain" in {
+            val result = callEndpoint(buildRequestBodyHandler(
+              requestBody = (),
+              responseContentType = MediaType("text", "plain")
+            ))
+
+            val contentType = extractContentType(result)
+            assertResult(MediaType("text", "plain").show)(contentType)
+          }
+        }
+
+      }
+
+      "responseEncoder constructor parameter" - {
+        "int" in {
+          val encoder = Encoder.instance[Unit](_ => 42.asJson)
+          val result = callEndpoint(buildRequestBodyHandler[Unit](())(encoder))
+          val responseBody = extractBody[Int](result)
+          assertResult(42)(responseBody)
+        }
+        "string" in {
+          val encoder = Encoder.instance[Unit](_ => "hello world".asJson)
+          val result = callEndpoint(buildRequestBodyHandler[Unit](())(encoder))
+          val responseBody = extractBody[String](result)
+          assertResult("hello world")(responseBody)
+        }
       }
 
       "apply method" - {
@@ -197,9 +193,8 @@ final class EndpointHandlerSpec extends UnitSpec {
         }
 
         def assertApply(fn: String => String, expected: String): Unit = {
-          implicit val codec = buildCodec[String, String]("hello world")
-
-          val handler = new EndpointHandler {
+          val requestReader = buildRequestReader[String, String]("hello world")
+          val handler = new EndpointHandler(requestReader) {
             override def apply(request: String)(implicit
               session: RequestSession
             ): Future[String] = {
@@ -226,13 +221,13 @@ final class EndpointHandlerSpec extends UnitSpec {
         responseFormatter: A => A = identity[A] _,
         responseContentType: MediaType = MediaTypes.any
       )(implicit encoder: Encoder[A]): EndpointHandler[A, A, A] = {
-        implicit val codec = buildCodec(
+        val requestReader = buildRequestReader[A, A](
           requestBody = requestBody,
           responseFormatter = responseFormatter,
           responseContentType = responseContentType
         )
 
-        new EndpointHandler {
+        new EndpointHandler(requestReader) {
           override def apply(request: A)(implicit session: RequestSession): Future[A] = {
             Future.value(request)
           }
@@ -242,9 +237,9 @@ final class EndpointHandlerSpec extends UnitSpec {
       def buildRequestSessionHandler(
         session: RequestSession
       ): EndpointHandler[Unit, Option[String], Option[String]] = {
-        implicit val codec = buildCodec[Unit, Option[String]]((), session)
+        val requestReader = buildRequestReader[Unit, Option[String]]((), session)
 
-        new EndpointHandler {
+        new EndpointHandler(requestReader) {
           override def apply(request: Unit)(implicit
             session: RequestSession
           ): Future[Option[String]] = {
@@ -253,15 +248,14 @@ final class EndpointHandlerSpec extends UnitSpec {
         }
       }
 
-      def buildCodec[Req, Res](
+      def buildRequestReader[Req, Res](
         requestBody: Req,
         session: RequestSession = RequestSession(None),
         responseFormatter: Res => Res = identity[Res] _,
         responseContentType: MediaType = MediaTypes.any
-      )(implicit encoder: Encoder[Res]): EndpointCodec[Req, Res, Res] = {
+      ): RequestReader[EndpointContext[Req, Res, Res]] = {
         val context = EndpointContext(requestBody, session, responseFormatter, responseContentType)
-        val reader = RequestReader.value(context)
-        EndpointCodec(reader, encoder)
+        RequestReader.value(context)
       }
 
       def callEndpoint[Req, Res](

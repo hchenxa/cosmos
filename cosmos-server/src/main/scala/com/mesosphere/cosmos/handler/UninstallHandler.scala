@@ -1,20 +1,28 @@
 package com.mesosphere.cosmos.handler
 
 import com.mesosphere.cosmos._
-import com.mesosphere.cosmos.http.RequestSession
+import com.mesosphere.cosmos.http.{MediaTypes, RequestSession}
 import com.mesosphere.cosmos.model.thirdparty.marathon.MarathonApp
 import com.mesosphere.cosmos.model.{AppId, UninstallRequest, UninstallResponse, UninstallResult}
 import com.mesosphere.cosmos.repository.PackageCollection
 import com.mesosphere.universe.PackageDetailsVersion
 import com.twitter.finagle.http.Status
 import com.twitter.util.Future
+import io.circe.Encoder
+import io.finch.DecodeRequest
 
 private[cosmos] final class UninstallHandler(
   adminRouter: AdminRouter,
   packageCache: PackageCollection
 )(implicit
-  codec: EndpointCodec[UninstallRequest, UninstallResponse, UninstallResponse]
-) extends EndpointHandler {
+  decoder: DecodeRequest[UninstallRequest],
+  encoder: Encoder[UninstallResponse]
+) extends EndpointHandler(
+  requestReader = RequestReaders.standard[UninstallRequest, UninstallResponse](
+    accepts = MediaTypes.UninstallRequest,
+    produces = MediaTypes.UninstallResponse
+  )
+) {
 
   private type FwIds = List[String]
 

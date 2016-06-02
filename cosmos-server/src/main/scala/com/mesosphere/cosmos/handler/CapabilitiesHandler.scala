@@ -1,12 +1,17 @@
 package com.mesosphere.cosmos.handler
 
-import com.mesosphere.cosmos.http.RequestSession
+import com.mesosphere.cosmos.http.{MediaTypes, RequestSession}
 import com.mesosphere.cosmos.model.{CapabilitiesResponse, Capability}
 import com.twitter.util.Future
+import io.circe.Encoder
 
 private[cosmos] final class CapabilitiesHandler(implicit
-  codec: EndpointCodec[Unit, CapabilitiesResponse, CapabilitiesResponse]
-) extends EndpointHandler {
+  encoder: Encoder[CapabilitiesResponse]
+) extends EndpointHandler(
+  requestReader = RequestReaders.noBody[CapabilitiesResponse](
+    produces = MediaTypes.CapabilitiesResponse
+  )
+) {
 
   private[this] val response = CapabilitiesResponse(List(Capability("PACKAGE_MANAGEMENT")))
 

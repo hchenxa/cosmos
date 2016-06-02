@@ -10,7 +10,17 @@ import scala.reflect.ClassTag
 
 object RequestReaders {
 
-  /** Builds a [[io.finch.RequestReader]] that does not parse the request body. */
+  def noBody[Res](produces: MediaType): RequestReader[EndpointContext[Unit, Res, Res]] = {
+    noBody(producesOnly[Res](produces))
+  }
+
+  def standard[Req, Res](accepts: MediaType, produces: MediaType)(implicit
+    decoder: DecodeRequest[Req],
+    reqClassTag: ClassTag[Req]
+  ): RequestReader[EndpointContext[Req, Res, Res]] = {
+    standard(accepts, producesOnly[Res](produces))
+  }
+
   def noBody[Res, VRes](
     produces: Seq[(MediaType, Res => VRes)]
   ): RequestReader[EndpointContext[Unit, Res, VRes]] = {
@@ -19,7 +29,6 @@ object RequestReaders {
     }
   }
 
-  /** Builds a [[io.finch.RequestReader]] that parses the request body. */
   def standard[Req, Res, VRes](accepts: MediaType, produces: Seq[(MediaType, Res => VRes)])(implicit
     decoder: DecodeRequest[Req],
     requestClassTag: ClassTag[Req]
@@ -48,5 +57,9 @@ object RequestReaders {
       (RequestSession(auth.map(Authorization(_))), responseFormatter, responseContentType)
     }
   }
+
+  private[this] def producesOnly[Response](
+    mediaType: MediaType
+  ): Seq[(MediaType, Response => Response)] = Seq((mediaType, identity))
 
 }

@@ -5,7 +5,7 @@ import java.util.Base64
 
 import cats.data.Xor
 import com.github.mustachejava.DefaultMustacheFactory
-import com.mesosphere.cosmos.http.RequestSession
+import com.mesosphere.cosmos.http.{MediaTypes, RequestSession}
 import com.mesosphere.cosmos.jsonschema.JsonSchemaValidation
 import com.mesosphere.cosmos.model._
 import com.mesosphere.cosmos.model.thirdparty.marathon.MarathonApp
@@ -16,7 +16,8 @@ import com.twitter.io.Charsets
 import com.twitter.util.Future
 import io.circe.parse.parse
 import io.circe.syntax._
-import io.circe.{Json, JsonObject}
+import io.circe.{Encoder, Json, JsonObject}
+import io.finch.DecodeRequest
 
 import scala.collection.JavaConverters._
 
@@ -24,8 +25,14 @@ private[cosmos] final class PackageInstallHandler(
   packageCache: PackageCollection,
   packageRunner: PackageRunner
 )(implicit
-  codec: EndpointCodec[InstallRequest, InstallResponse, InstallResponse]
-) extends EndpointHandler {
+  decoder: DecodeRequest[InstallRequest],
+  encoder: Encoder[InstallResponse]
+) extends EndpointHandler(
+  requestReader = RequestReaders.standard[InstallRequest, InstallResponse](
+    accepts = MediaTypes.InstallRequest,
+    produces = MediaTypes.InstallResponse
+  )
+) {
 
   import PackageInstallHandler._
 
