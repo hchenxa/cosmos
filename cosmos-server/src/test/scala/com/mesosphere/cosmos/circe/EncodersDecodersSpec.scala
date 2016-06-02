@@ -129,30 +129,35 @@ final class EncodersDecodersSpec extends FreeSpec {
     }
   }
 
-  "ExampleVersionedAdt is encoded without class labels" - {
+  "removeClassLabelsFromEncoding() removes class names from encoded ADTs for responses" - {
     "because the version can be determined from the Content-Type response header" - {
 
-      "encoding of Version0" in {
-        assertResult(Json.obj()) {
-          (Version0: ExampleVersionedAdt).asJson
-        }
-      }
+      "ExampleVersionedAdt" - {
 
-      "encoding of Version1" in {
-        assertResult(Json.obj("a" -> "foo".asJson)) {
-          (Version1("foo"): ExampleVersionedAdt).asJson
-        }
-      }
+        val encoder = removeClassLabelsFromEncoding(semiauto.deriveFor[ExampleVersionedAdt].encoder)
 
-      "encoding of Version2" in {
-        assertResult(Json.obj("a" -> "bar".asJson, "b" -> 42.asJson)) {
-          (Version2("bar", 42): ExampleVersionedAdt).asJson
+        "encoding of Version0" in {
+          assertResult(Json.obj()) {
+            (Version0: ExampleVersionedAdt).asJson(encoder)
+          }
         }
-      }
 
-      "encoding of Version3" in {
-        assertResult(Json.obj("b" -> 123.asJson, "c" -> 2.18282.asJson)) {
-          (Version3(123, 2.18282): ExampleVersionedAdt).asJson
+        "encoding of Version1" in {
+          assertResult(Json.obj("a" -> "foo".asJson)) {
+            (Version1("foo"): ExampleVersionedAdt).asJson(encoder)
+          }
+        }
+
+        "encoding of Version2" in {
+          assertResult(Json.obj("a" -> "bar".asJson, "b" -> 42.asJson)) {
+            (Version2("bar", 42): ExampleVersionedAdt).asJson(encoder)
+          }
+        }
+
+        "encoding of Version3" in {
+          assertResult(Json.obj("b" -> 123.asJson, "c" -> 2.18282.asJson)) {
+            (Version3(123, 2.18282): ExampleVersionedAdt).asJson(encoder)
+          }
         }
       }
 
@@ -162,10 +167,6 @@ final class EncodersDecodersSpec extends FreeSpec {
 }
 
 object EncodersDecodersSpec {
-
-  implicit val encodeExampleVersionedAdt: Encoder[ExampleVersionedAdt] = {
-    removeClassLabelsFromEncoding(semiauto.deriveFor[ExampleVersionedAdt].encoder)
-  }
 
   private def unsafeDecodeJson[A: Decoder](json: Json)(implicit decoder: Decoder[A]): A = {
     decoder.decodeJson(json).getOrElse(throw new AssertionError("Unable to decode"))
