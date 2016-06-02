@@ -1,7 +1,6 @@
 package com.mesosphere.cosmos.handler
 
 import com.mesosphere.cosmos.http.RequestSession
-import com.twitter.finagle.http.Method
 import com.twitter.util.Future
 import io.circe.Json
 import io.circe.syntax._
@@ -12,41 +11,18 @@ private[cosmos] abstract class EndpointHandler[Request, Response, VersionedRespo
   codec: EndpointCodec[Request, Response, VersionedResponse]
 ) {
 
-  import EndpointHandler._
-
   def apply(request: Request)(implicit session: RequestSession): Future[Response]
 
-  private[cosmos] def route(method: Method, path: String*): Endpoint[Json] = {
-    val endpointPath = path.foldLeft[Endpoint[HNil]](/)(_ / _)
+  private[cosmos] def forRoute(route: Endpoint[HNil]): Endpoint[Json] = {
+    val endpoint = route ? codec.requestReader
 
-    endpoint(method)(endpointPath ? codec.requestReader) {
-      context: EndpointContext[Request, Response, VersionedResponse] =>
+    endpoint { context: EndpointContext[Request, Response, VersionedResponse] =>
+      this(context.requestBody)(context.session).map { response =>
+        val encodedResponse = context.responseFormatter(response)
+          .asJson(codec.responseEncoder)
 
-        this(context.requestBody)(context.session).map { response =>
-          val encodedResponse = context.responseFormatter(response)
-            .asJson(codec.responseEncoder)
-
-          Ok(encodedResponse).withContentType(Some(context.responseContentType.show))
-        }
-    }
-  }
-
-}
-
-object EndpointHandler {
-
-  private def endpoint[A](method: Method): Endpoint[A] => Endpoint[A] = {
-    method match {
-      case Method.Get     => get
-      case Method.Post    => post
-      case Method.Put     => put
-      case Method.Head    => head
-      case Method.Patch   => patch
-      case Method.Delete  => delete
-      case Method.Trace   => trace
-      case Method.Connect => connect
-      case Method.Options => options
-      case _              => throw new IllegalArgumentException(s"Unknown HTTP method: $method")
+        Ok(encodedResponse).withContentType(Some(context.responseContentType.show))
+      }
     }
   }
 

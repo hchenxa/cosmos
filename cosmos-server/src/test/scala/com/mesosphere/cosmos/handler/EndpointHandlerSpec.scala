@@ -4,19 +4,21 @@ import cats.Eval
 import cats.data.Xor
 import com.mesosphere.cosmos.UnitSpec
 import com.mesosphere.cosmos.http.{Authorization, MediaType, MediaTypes, RequestSession}
+import com.twitter.finagle.http.Method._
 import com.twitter.finagle.http.{Method, RequestBuilder, Status}
 import com.twitter.util.{Await, Future}
 import io.circe.syntax._
 import io.circe.{Decoder, Encoder, Json}
-import io.finch.{Input, Output, RequestReader}
+import io.finch._
+import shapeless.HNil
 
 final class EndpointHandlerSpec extends UnitSpec {
 
   "EndpointHandler" - {
 
-    "route()" - {
+    "forRoute()" - {
 
-      "HTTP method parameter" - {
+      "method portion of route parameter" - {
 
         "route get matches request get" in {
           val result = callWithMethods(routeMethod = Method.Get, requestMethod = Method.Get)
@@ -41,14 +43,29 @@ final class EndpointHandlerSpec extends UnitSpec {
         def callWithMethods(routeMethod: Method, requestMethod: Method): EndpointResult = {
           callEndpoint(
             handler = buildRequestBodyHandler(requestBody = ()),
-            routeMethod = routeMethod,
+            route = methodFn(routeMethod)(/),
             requestMethod = requestMethod
           )
         }
 
+        def methodFn[A](method: Method): Endpoint[A] => Endpoint[A] = {
+          method match {
+            case Get     => get
+            case Post    => post
+            case Put     => put
+            case Head    => head
+            case Patch   => patch
+            case Delete  => delete
+            case Trace   => trace
+            case Connect => connect
+            case Options => options
+            case _       => throw new AssertionError("unknown HTTP method")
+          }
+        }
+
       }
 
-      "path parameter" - {
+      "path portion of route parameter" - {
 
         "route path foo/bar matches request path foo/bar" in {
           val result = callWithPaths(routePath = Seq("foo", "bar"), requestPath = Seq("foo", "bar"))
@@ -72,7 +89,8 @@ final class EndpointHandlerSpec extends UnitSpec {
 
         def callWithPaths(routePath: Seq[String], requestPath: Seq[String]): EndpointResult = {
           val handler = buildRequestBodyHandler(requestBody = ())
-          callEndpoint(handler, routePath = routePath, requestPath = requestPath)
+          val route = post(routePath.foldLeft[Endpoint[HNil]](/)(_ / _))
+          callEndpoint(handler, route = route, requestPath = requestPath)
         }
 
       }
@@ -248,12 +266,11 @@ final class EndpointHandlerSpec extends UnitSpec {
 
       def callEndpoint[Req, Res](
         handler: EndpointHandler[Req, Res, Res],
-        routeMethod: Method = Method.Post,
-        routePath: Seq[String] = Seq.empty,
+        route: Endpoint[HNil] = post(/),
         requestMethod: Method = Method.Post,
         requestPath: Seq[String] = Seq.empty
       ): EndpointResult = {
-        val endpoint = handler.route(routeMethod, routePath: _*)
+        val endpoint = handler.forRoute(route)
         val request = RequestBuilder()
           .url(s"http://some.host/${requestPath.mkString("/")}")
           .build(requestMethod, content = None)

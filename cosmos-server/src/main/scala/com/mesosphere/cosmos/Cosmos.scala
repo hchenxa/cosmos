@@ -10,7 +10,7 @@ import com.mesosphere.cosmos.model._
 import com.mesosphere.cosmos.repository.{PackageSourcesStorage, UniverseClient, ZooKeeperStorage}
 import com.netaporter.uri.Uri
 import com.twitter.finagle.Service
-import com.twitter.finagle.http.{Method, Request, Response, Status}
+import com.twitter.finagle.http.{Request, Response, Status}
 import com.twitter.finagle.stats.{NullStatsReceiver, StatsReceiver}
 import com.twitter.util.Try
 import io.circe.Json
@@ -36,47 +36,47 @@ private[cosmos] final class Cosmos(
   lazy val logger = org.slf4j.LoggerFactory.getLogger(classOf[Cosmos])
 
   val packageInstall: Endpoint[Json] = {
-    packageInstallHandler.route(Method.Post, "package", "install")
+    packageInstallHandler.forRoute(post("package" / "install"))
   }
 
   val packageUninstall: Endpoint[Json] = {
-    uninstallHandler.route(Method.Post, "package", "uninstall")
+    uninstallHandler.forRoute(post("package" / "uninstall"))
   }
 
   val packageDescribe: Endpoint[Json] = {
-    packageDescribeHandler.route(Method.Post, "package", "describe")
+    packageDescribeHandler.forRoute(post("package" / "describe"))
   }
 
   val packageRender: Endpoint[Json] = {
-    packageRenderHandler.route(Method.Post, "package", "render")
+    packageRenderHandler.forRoute(post("package" / "render"))
   }
 
   val packageListVersions: Endpoint[Json] = {
-    packageListVersionsHandler.route(Method.Post, "package", "list-versions")
+    packageListVersionsHandler.forRoute(post("package" / "list-versions"))
   }
 
   val packageSearch: Endpoint[Json] = {
-    packageSearchHandler.route(Method.Post, "package", "search")
+    packageSearchHandler.forRoute(post("package" / "search"))
   }
 
   val packageList: Endpoint[Json] = {
-    listHandler.route(Method.Post, "package", "list")
+    listHandler.forRoute(post("package" / "list"))
   }
 
   val capabilities: Endpoint[Json] = {
-    capabilitiesHandler.route(Method.Get, "capabilities")
+    capabilitiesHandler.forRoute(get("capabilities"))
   }
 
   val packageListSources: Endpoint[Json] = {
-    listRepositoryHandler.route(Method.Post, "package", "repository", "list")
+    listRepositoryHandler.forRoute(post("package" / "repository" / "list"))
   }
 
   val packageAddSource: Endpoint[Json] = {
-    addRepositoryHandler.route(Method.Post, "package", "repository", "add")
+    addRepositoryHandler.forRoute(post("package" / "repository" / "add"))
   }
 
   val packageDeleteSource: Endpoint[Json] = {
-    deleteRepositoryHandler.route(Method.Post, "package", "repository", "delete")
+    deleteRepositoryHandler.forRoute(post("package" / "repository" / "delete"))
   }
 
   val service: Service[Request, Response] = {

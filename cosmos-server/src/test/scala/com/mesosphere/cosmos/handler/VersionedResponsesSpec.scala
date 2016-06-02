@@ -4,13 +4,13 @@ import cats.Eval
 import com.mesosphere.cosmos.UnitSpec
 import com.mesosphere.cosmos.circe.Encoders
 import com.mesosphere.cosmos.http.{MediaType, MediaTypes, RequestSession}
-import com.twitter.finagle.http.{Method, RequestBuilder}
+import com.twitter.finagle.http.RequestBuilder
 import com.twitter.io.Buf
 import com.twitter.util.{Await, Future, Try}
 import io.circe.generic.semiauto
 import io.circe.syntax._
 import io.circe.{Encoder, Json}
-import io.finch.{Endpoint, Input, Output}
+import io.finch.{/, Endpoint, Input, Output, post}
 
 final class VersionedResponsesSpec extends UnitSpec {
 
@@ -102,6 +102,6 @@ object VersionedResponsesSpec {
 
   }
 
-  val FoobarEndpoint: Endpoint[Json] = FoobarHandler.route(Method.Post, endpointPath: _*)
+  val FoobarEndpoint: Endpoint[Json] = FoobarHandler.forRoute(post(/))
 
 }
