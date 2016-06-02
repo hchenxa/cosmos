@@ -55,7 +55,7 @@ object VersionedResponsesSpec {
   }
 
   def versionedJson(version: Int): MediaType = {
-    MediaTypes.applicationJson.copy(parameters = Some(Map("version" -> s"v$version")))
+    MediaTypes.applicationJson.copy(parameters = Map("version" -> s"v$version"))
   }
 
   implicit val versionedFoobarResponseEncoder: Encoder[VersionedFoobarResponse] = {

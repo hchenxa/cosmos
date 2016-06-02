@@ -18,15 +18,8 @@ object MediaTypeOps {
   }
 
   def compatible(expected: MediaType, actual: MediaType): Boolean = {
-    val typesAndSubTypesCompatible = compatibleIgnoringParameters(expected, actual)
-
-    val paramsCompatible = (expected.parameters, actual.parameters) match {
-      case (None, _) => true
-      case (Some(_), None) => false
-      case (Some(l), Some(r)) => isLeftSubSetOfRight(l, r)
-    }
-
-    typesAndSubTypesCompatible && paramsCompatible
+    compatibleIgnoringParameters(expected, actual) &&
+      isLeftSubSetOfRight(expected.parameters, actual.parameters)
   }
 
   private[this] def isLeftSubSetOfRight(left: Map[String, String], right: Map[String, String]): Boolean = {
