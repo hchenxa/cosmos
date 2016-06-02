@@ -2,6 +2,7 @@ package com.mesosphere.cosmos.handler
 
 import cats.Eval
 import com.mesosphere.cosmos.UnitSpec
+import com.mesosphere.cosmos.circe.Encoders
 import com.mesosphere.cosmos.http.{MediaType, MediaTypes, RequestSession}
 import com.twitter.finagle.http.{Method, RequestBuilder}
 import com.twitter.io.Buf
@@ -57,10 +58,8 @@ object VersionedResponsesSpec {
     MediaTypes.applicationJson.copy(parameters = Some(Map("version" -> s"v$version")))
   }
 
-  // TODO cruhland: Move this to Encoders as a helper method, and test
   implicit val versionedFoobarResponseEncoder: Encoder[VersionedFoobarResponse] = {
-    val encoder = semiauto.deriveFor[VersionedFoobarResponse].encoder
-    Encoder.instance(encoder(_).asObject.flatMap(_.values.headOption).getOrElse(Json.empty))
+    Encoders.removeClassLabelsFromEncoding(semiauto.deriveFor[VersionedFoobarResponse].encoder)
   }
 
   val foobarCodec: EndpointCodec[String, FoobarResponse, VersionedFoobarResponse] = {

@@ -1,9 +1,7 @@
 package com.mesosphere.cosmos
 
-/** Intended to be used only in tests.
-  *
-  * For some reason Shapeless fails to create a generic representation of this class if it is
-  * defined in test scope or in the `com.mesosphere.cosmos.circe` package.
+/** This is used in [[com.mesosphere.cosmos.circe.EncodersDecodersSpec]], but Shapeless is unable
+  * to find it if it's defined in that file, or the `com.mesosphere.cosmos.circe` package.
   */
 sealed trait ExampleVersionedAdt
 case object Version0 extends ExampleVersionedAdt

@@ -2,18 +2,19 @@ package com.mesosphere.cosmos.circe
 
 import cats.data.Xor
 import com.mesosphere.cosmos._
+import com.mesosphere.cosmos.circe.Decoders._
+import com.mesosphere.cosmos.circe.Encoders._
 import com.mesosphere.cosmos.model.{AppId, PackageRepository}
 import com.mesosphere.universe.Images
 import com.netaporter.uri.Uri
 import io.circe._
+import io.circe.generic.semiauto
 import io.circe.parse._
 import io.circe.syntax._
 import org.scalatest.FreeSpec
 
 final class EncodersDecodersSpec extends FreeSpec {
 
-  import Decoders._
-  import Encoders._
   import EncodersDecodersSpec._
 
   "Images" - {
@@ -161,6 +162,10 @@ final class EncodersDecodersSpec extends FreeSpec {
 }
 
 object EncodersDecodersSpec {
+
+  implicit val encodeExampleVersionedAdt: Encoder[ExampleVersionedAdt] = {
+    removeClassLabelsFromEncoding(semiauto.deriveFor[ExampleVersionedAdt].encoder)
+  }
 
   private def unsafeDecodeJson[A: Decoder](json: Json)(implicit decoder: Decoder[A]): A = {
     decoder.decodeJson(json).getOrElse(throw new AssertionError("Unable to decode"))
