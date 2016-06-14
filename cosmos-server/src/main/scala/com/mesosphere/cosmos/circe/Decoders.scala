@@ -7,6 +7,8 @@ import com.mesosphere.cosmos.model._
 import com.mesosphere.cosmos.model.thirdparty.adminrouter.DcosVersion
 import com.mesosphere.cosmos.model.thirdparty.marathon._
 import com.mesosphere.cosmos.model.thirdparty.mesos.master._
+import com.mesosphere.cosmos.model.thirdparty.kubernetes._
+
 import com.mesosphere.universe._
 import com.mesosphere.universe.v3.{DcosReleaseVersion, DcosReleaseVersionParser}
 import com.netaporter.uri.Uri
@@ -85,6 +87,17 @@ object Decoders {
 
   implicit val decodeRenderRequest: Decoder[RenderRequest] = deriveFor[RenderRequest].decoder
   implicit val decodeRenderResponse: Decoder[RenderResponse] = deriveFor[RenderResponse].decoder
+// Add kubernete decode implicit function
+  implicit val decodeKubernetesPodResponse: Decoder[KubernetesPodResponse] = deriveFor[KubernetesPodResponse].decoder
+  implicit val decodeKubernetesPodsResponse: Decoder[KubernetesPodsResponse] = deriveFor[KubernetesPodsResponse].decoder
+  implicit val decodeKubernetesPodContainer: Decoder[KubernetesPodContainer] = deriveFor[KubernetesPodContainer].decoder
+  implicit val decodeKubernetesPodMetadata: Decoder[KubernetesPodMetadata] = deriveFor[KubernetesPodMetadata].decoder
+  implicit val decodeKubernetesPodSpec: Decoder[KubernetesPodSpec] = deriveFor[KubernetesPodSpec].decoder
+  implicit val decodeKubernetesPod: Decoder[KubernetesPod] = deriveFor[KubernetesPod].decoder
+  implicit val decodeInstallKubernetesRequest: Decoder[InstallKubernetesRequest] = deriveFor[InstallKubernetesRequest].decoder
+  implicit val decodeInstallKubernetesResponse: Decoder[InstallKubernetesResponse] = deriveFor[InstallKubernetesResponse].decoder
+
+
 
   implicit val decodeCommandDefinition: Decoder[Command] = deriveFor[Command].decoder
   implicit val decodeDescribeResponse: Decoder[DescribeResponse] = deriveFor[DescribeResponse].decoder

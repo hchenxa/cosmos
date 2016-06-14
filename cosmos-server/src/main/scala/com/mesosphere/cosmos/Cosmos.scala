@@ -27,6 +27,7 @@ import com.mesosphere.cosmos.repository.ZooKeeperStorage
 
 private[cosmos] final class Cosmos(
   uninstallHandler: EndpointHandler[UninstallRequest, UninstallResponse],
+  kubernetesInstallHandler: EndpointHandler[InstallKubernetesRequest, InstallKubernetesResponse],
   packageInstallHandler: EndpointHandler[InstallRequest, InstallResponse],
   packageRenderHandler: EndpointHandler[RenderRequest, RenderResponse],
   packageSearchHandler: EndpointHandler[SearchRequest, SearchResponse],
@@ -61,6 +62,19 @@ private[cosmos] final class Cosmos(
 
     post("package" / "uninstall" ? uninstallHandler.reader)(respond _)
   }
+
+// Add Kubernetes install handle here
+  val kubernetesPackageInstall: Endpoint[Json] = {
+
+    def respond(t: (RequestSession, InstallKubernetesRequest)): Future[Output[Json]] = {
+      implicit val (session, request) = t
+      kubernetesInstallHandler(request)
+        .map(res => Ok(res.asJson).withContentType(Some(kubernetesInstallHandler.produces.show)))
+    }
+
+    post("package" / "kubernetes-install" ? kubernetesInstallHandler.reader)(respond _)
+  }
+
 
   val packageDescribe: Endpoint[Json] = {
 
@@ -168,6 +182,7 @@ private[cosmos] final class Cosmos(
     val stats = statsReceiver.scope("errorFilter")
 
     (packageInstall
+      :+: kubernetesPackageInstall
       :+: packageRender
       :+: packageDescribe
       :+: packageSearch
@@ -223,7 +238,7 @@ object Cosmos extends FinchServer {
         val dcosHost: String = Uris.stripTrailingSlash(dh)
         logger.info("Connecting to DCOS Cluster at: {}", dcosHost)
         val adminRouter: Uri = dcosHost
-        val mar: Uri = dcosHost / "marathon"
+        val mar: Uri = dcosHost / "kubernetes"
         val master: Uri = dcosHost / "mesos"
         (adminRouter, mar, master)
       }
@@ -232,7 +247,7 @@ object Cosmos extends FinchServer {
           val adminRouter: Uri = adminRouterUri().toStringRaw
           val mar: Uri = marathonUri().toStringRaw
           val master: Uri = mesosMasterUri().toStringRaw
-          logger.info("Connecting to Marathon at: {}", mar)
+          logger.info("Connecting to Kubernetes at: {}", mar)
           logger.info("Connecting to Mesos master at: {}", master)
           logger.info("Connection to AdminRouter at: {}", adminRouter)
           (adminRouter, mar, master)
@@ -294,6 +309,7 @@ object Cosmos extends FinchServer {
 
     new Cosmos(
       new UninstallHandler(adminRouter, repositories),
+      new KubernetesInstallHandler(repositories, packageRunner),
       new PackageInstallHandler(repositories, packageRunner),
       new PackageRenderHandler(repositories),
       new PackageSearchHandler(repositories),

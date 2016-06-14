@@ -4,6 +4,7 @@ import com.mesosphere.cosmos.circe.Decoders._
 import com.mesosphere.cosmos.http.RequestSession
 import com.mesosphere.cosmos.model.AppId
 import com.mesosphere.cosmos.model.thirdparty.marathon.{MarathonAppResponse, MarathonAppsResponse}
+import com.mesosphere.cosmos.model.thirdparty.kubernetes.{KubernetesPodResponse, KubernetesPodsResponse}
 import com.netaporter.uri.Uri
 import com.netaporter.uri.dsl._
 import com.twitter.finagle.Service
@@ -19,6 +20,11 @@ class MarathonClient(
 
   def createApp(appJson: Json)(implicit session: RequestSession): Future[Response] = {
     client(post("v2" / "apps" , appJson))
+  }
+
+//Hack for Kubernetes pod create
+  def createPod(appJson: Json)(implicit session: RequestSession): Future[Response] = {
+    client(post("api" / "v1" / "namespaces" / "default" / "pods", appJson))
   }
 
   def getAppOption(appId: AppId)(implicit session: RequestSession): Future[Option[MarathonAppResponse]] = {

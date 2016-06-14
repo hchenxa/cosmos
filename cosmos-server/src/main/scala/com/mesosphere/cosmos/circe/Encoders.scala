@@ -8,6 +8,7 @@ import com.mesosphere.cosmos.http.MediaType
 import com.mesosphere.cosmos.model._
 import com.mesosphere.cosmos.model.thirdparty.marathon._
 import com.mesosphere.cosmos.model.thirdparty.mesos.master._
+import com.mesosphere.cosmos.model.thirdparty.kubernetes._
 import com.mesosphere.universe._
 import com.mesosphere.universe.v3.DcosReleaseVersion
 import com.netaporter.uri.Uri
@@ -101,6 +102,18 @@ object Encoders {
   implicit val encodeListResponse: Encoder[ListResponse] = deriveFor[ListResponse].encoder
   implicit val encodeInstallation: Encoder[Installation] = deriveFor[Installation].encoder
   implicit val encodePackageInformation: Encoder[InstalledPackageInformation] = deriveFor[InstalledPackageInformation].encoder
+
+// Add kubernete decode implicit function
+  implicit val encodeKubernetesPodResponse: Encoder[KubernetesPodResponse] = deriveFor[KubernetesPodResponse].encoder
+  implicit val encodeKubernetesPodsResponse: Encoder[KubernetesPodsResponse] = deriveFor[KubernetesPodsResponse].encoder
+  implicit val encodeKubernetesPodContainer: Encoder[KubernetesPodContainer] = deriveFor[KubernetesPodContainer].encoder
+  implicit val encodeKubernetesPodMetadata: Encoder[KubernetesPodMetadata] = deriveFor[KubernetesPodMetadata].encoder
+  implicit val encodeKubernetesPodSpec: Encoder[KubernetesPodSpec] = deriveFor[KubernetesPodSpec].encoder
+  implicit val encodeKubernetesPod: Encoder[KubernetesPod] = deriveFor[KubernetesPod].encoder
+  implicit val encodeInstallKubernetesRequest: Encoder[InstallKubernetesRequest] = deriveFor[InstallKubernetesRequest].encoder
+  implicit val encodeInstallKubernetesResponse: Encoder[InstallKubernetesResponse] = deriveFor[InstallKubernetesResponse].encoder
+
+
 
   implicit val encodeUniverseVersion: Encoder[UniverseVersion] = Encoder.instance(_.toString.asJson)
   implicit val encodePackagingVersion: Encoder[PackagingVersion] = Encoder.instance(_.toString.asJson)

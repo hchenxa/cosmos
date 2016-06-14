@@ -4,6 +4,7 @@ import com.mesosphere.cosmos.http.RequestSession
 import com.mesosphere.cosmos.model.AppId
 import com.mesosphere.cosmos.model.thirdparty.adminrouter.DcosVersion
 import com.mesosphere.cosmos.model.thirdparty.marathon.{MarathonAppResponse, MarathonAppsResponse}
+import com.mesosphere.cosmos.model.thirdparty.kubernetes.{KubernetesPodResponse, KubernetesPodsResponse}
 import com.mesosphere.cosmos.model.thirdparty.mesos.master._
 import com.twitter.finagle.http._
 import com.twitter.util.Future
@@ -30,5 +31,7 @@ class AdminRouter(
   def getMasterState(frameworkName: String)(implicit session: RequestSession): Future[MasterState] = mesos.getMasterState(frameworkName)
 
   def getDcosVersion()(implicit session: RequestSession): Future[DcosVersion] = adminRouterClient.getDcosVersion()
+
+  def createPod(appJson: Json)(implicit session: RequestSession): Future[Response] = marathon.createPod(appJson)
 
 }
