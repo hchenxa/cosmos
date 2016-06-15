@@ -22,6 +22,9 @@ abstract class ServiceClient(baseUri: Uri) {
   }
 
   protected def post(uri: Uri, jsonBody: Json)(implicit session: RequestSession): Request = {
+  val logger = org.slf4j.LoggerFactory.getLogger(getClass)
+  logger.info("Send post request to kubernetes with Uri: {}", uri) 
+  logger.info("the jsonBody was:{}", jsonBody)
     baseRequestBuilder(uri)
       .setHeader("Accept", MediaTypes.applicationJson.show)
       .setHeader("Content-Type", MediaTypes.applicationJson.show)
@@ -78,7 +81,8 @@ abstract class ServiceClient(baseUri: Uri) {
   private[cosmos] final def baseRequestBuilder(uri: Uri)(implicit session: RequestSession): RequestBuilder[Yes, Nothing] = {
     val builder = RequestBuilder()
       .url(s"$cleanedBaseUri${uri.toString}")
-
+  val logger = org.slf4j.LoggerFactory.getLogger(getClass)
+  logger.info("the builder URI was:{}", builder)
     session.authorization match {
       case Some(auth) => builder.setHeader("Authorization", auth.headerValue)
       case _ => builder

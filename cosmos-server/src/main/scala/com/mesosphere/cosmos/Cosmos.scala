@@ -42,7 +42,7 @@ private[cosmos] final class Cosmos(
   lazy val logger = org.slf4j.LoggerFactory.getLogger(classOf[Cosmos])
 
   val packageInstall: Endpoint[Json] = {
-
+    logger.info("Jump into packageInstall init")
     def respond(t: (RequestSession, InstallRequest)): Future[Output[Json]] = {
       implicit val (session, request) = t
       packageInstallHandler(request)
@@ -65,7 +65,7 @@ private[cosmos] final class Cosmos(
 
 // Add Kubernetes install handle here
   val kubernetesPackageInstall: Endpoint[Json] = {
-
+    logger.info("Jump into kubernetesPackageInstall init")
     def respond(t: (RequestSession, InstallKubernetesRequest)): Future[Output[Json]] = {
       implicit val (session, request) = t
       kubernetesInstallHandler(request)
@@ -74,7 +74,6 @@ private[cosmos] final class Cosmos(
 
     post("package" / "kubernetes-install" ? kubernetesInstallHandler.reader)(respond _)
   }
-
 
   val packageDescribe: Endpoint[Json] = {
 
@@ -238,7 +237,7 @@ object Cosmos extends FinchServer {
         val dcosHost: String = Uris.stripTrailingSlash(dh)
         logger.info("Connecting to DCOS Cluster at: {}", dcosHost)
         val adminRouter: Uri = dcosHost
-        val mar: Uri = dcosHost / "kubernetes"
+        val mar: Uri = marathonUri().toStringRaw
         val master: Uri = dcosHost / "mesos"
         (adminRouter, mar, master)
       }
@@ -275,6 +274,8 @@ object Cosmos extends FinchServer {
       logger.info("Using {} for the zookeeper connection", zkUri)
 
       val marathonPackageRunner = new MarathonPackageRunner(adminRouter)
+      
+      logger.info("Using {} for the kubernetes package runner", marathonPackageRunner)
 
       val zkRetryPolicy = new ExponentialBackoffRetry(1000, 3)
       val zkClient = CuratorFrameworkFactory.builder()

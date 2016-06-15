@@ -37,6 +37,8 @@ private[cosmos] final class KubernetesInstallHandler(
       .getPackageByPackageVersion(request.packageName, request.packageVersion)
       .flatMap { packageFiles =>
         val packageConfig = preparePackageConfig(request.options, packageFiles)
+        val logger = org.slf4j.LoggerFactory.getLogger(getClass)
+        logger.info("The prepared package config was:{}", packageConfig)
         packageRunner
           .launch_1(packageConfig)
           .map { runnerResponse =>
@@ -59,8 +61,11 @@ private[cosmos] object KubernetesInstallHandler {
     options: Option[JsonObject],
     packageFiles: PackageFiles
   ): Json = {
+    val logger = org.slf4j.LoggerFactory.getLogger(getClass)
+    logger.info("the Kubernetes Files was: {}", packageFiles)
+    logger.info("the Package options was: {}", options)
     val mergedOptions = mergeOptions(packageFiles, options)
-
+    logger.info("the merged options was: {}", mergedOptions)
     renderMustacheTemplate(packageFiles, mergedOptions)
 //    val marathonJson = renderMustacheTemplate(packageFiles, mergedOptions)
 //    val marathonJsonWithLabels = addLabels(marathonJson, packageFiles, mergedOptions)
