@@ -71,8 +71,7 @@ private[cosmos] final class Cosmos(
       kubernetesInstallHandler(request)
         .map(res => Ok(res.asJson).withContentType(Some(kubernetesInstallHandler.produces.show)))
     }
-
-    post("package" / "kubernetes-install" ? kubernetesInstallHandler.reader)(respond _)
+    post("package" / "install-kubernetes" ? kubernetesInstallHandler.reader)(respond _)
   }
 
   val packageDescribe: Endpoint[Json] = {

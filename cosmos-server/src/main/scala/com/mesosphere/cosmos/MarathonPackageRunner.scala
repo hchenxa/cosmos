@@ -40,24 +40,30 @@ final class MarathonPackageRunner(adminRouter: AdminRouter) extends PackageRunne
  def launch_1(renderedConfig: Json)(implicit session: RequestSession): Future[KubernetesPod] = {
     adminRouter.createPod(renderedConfig)
       .map { response =>
-        response.status match {
+        {
+          val logger = org.slf4j.LoggerFactory.getLogger(getClass)        
+          logger.info("The response in launch_1 was: {}", response.status)
+          response.status match {
           case Status.Conflict => throw PackageAlreadyInstalled()
           case status if (400 until 500).contains(status.code) =>
             decode[MarathonError](response.contentString) match {
               case Xor.Right(marathonError) =>
-                throw new MarathonBadResponse(marathonError)
+                throw new MarathonBadResponse(marathonError)        
               case Xor.Left(parseError) =>
                 throw new MarathonGenericError(status)
             }
           case status if (500 until 600).contains(status.code) =>
             throw MarathonBadGateway(status)
-          case _ =>
+          case _ =>{
+            logger.info("the resource.contentString was: {}", response.contentString)
+            logger.info("The resource response was : {}", response)
             decode[KubernetesPod](response.contentString) match {
               case Xor.Right(appResponse) => appResponse
               case Xor.Left(parseError) => throw new CirceError(parseError)
             }
+            }
+          }
+        }
         }
       }
-  }
-
 }
