@@ -42,7 +42,6 @@ private[cosmos] final class Cosmos(
   lazy val logger = org.slf4j.LoggerFactory.getLogger(classOf[Cosmos])
 
   val packageInstall: Endpoint[Json] = {
-    logger.info("Jump into packageInstall init")
     def respond(t: (RequestSession, InstallRequest)): Future[Output[Json]] = {
       implicit val (session, request) = t
       packageInstallHandler(request)
@@ -65,7 +64,6 @@ private[cosmos] final class Cosmos(
 
 // Add Kubernetes install handle here
   val kubernetesPackageInstall: Endpoint[Json] = {
-    logger.info("Jump into kubernetesPackageInstall init")
     def respond(t: (RequestSession, InstallKubernetesRequest)): Future[Output[Json]] = {
       implicit val (session, request) = t
       kubernetesInstallHandler(request)
@@ -234,7 +232,6 @@ object Cosmos extends FinchServer {
     val ar = Try(dcosUri())
       .map { dh =>
         val dcosHost: String = Uris.stripTrailingSlash(dh)
-        logger.info("Connecting to DCOS Cluster at: {}", dcosHost)
         val adminRouter: Uri = dcosHost
         val mar: Uri = marathonUri().toStringRaw
         val master: Uri = dcosHost / "mesos"

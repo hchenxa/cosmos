@@ -16,8 +16,6 @@ class AdminRouter(
   mesos: MesosMasterClient
 ) {
 
-  val logger = org.slf4j.LoggerFactory.getLogger(getClass)
-  logger.info("jump into adminrouter")
 
   def createApp(appJson: Json)(implicit session: RequestSession): Future[Response] = marathon.createApp(appJson)
 

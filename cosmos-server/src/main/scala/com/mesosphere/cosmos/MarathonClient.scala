@@ -24,16 +24,8 @@ class MarathonClient(
 
 //Hack for Kubernetes pod create
   def createPod(appJson: Json)(implicit session: RequestSession): Future[Response] = {
-
-    val logger = org.slf4j.LoggerFactory.getLogger(getClass)
-
-    logger.info("create pods with json file:{}", appJson)
-    client(post_1("api" / "v1" / "namespaces" / "default" / "pods", appJson)).map { response => {
-      logger.info("response status:{}", response.status)
-      response
-    }
-    }
-    }
+    client(post_1("api" / "v1" / "namespaces" / "default" / "pods", appJson))
+  }
 
   def getAppOption(appId: AppId)(implicit session: RequestSession): Future[Option[MarathonAppResponse]] = {
     val uri = "v2" / "apps" / appId.toUri

@@ -37,17 +37,13 @@ private[cosmos] final class KubernetesInstallHandler(
       .getPackageByPackageVersion(request.packageName, request.packageVersion)
       .flatMap { packageFiles =>
         val packageConfig = preparePackageConfig(request.options, packageFiles)
-        val logger = org.slf4j.LoggerFactory.getLogger(getClass)
-        logger.info("The prepared package config was:{}", packageConfig)
         packageRunner
           .launch_1(packageConfig)
           .map { runnerResponse =>
             val packageName = packageFiles.packageJson.name
             val packageVersion = packageFiles.packageJson.version
-            val kind = runnerResponse.kind
-            val apiVersion = runnerResponse.apiVersion
 //            val appId = runnerResponse.id
-            InstallKubernetesResponse(packageName, packageVersion, kind, apiVersion)
+            InstallKubernetesResponse(packageName, packageVersion)
           }
       }
   }
@@ -63,13 +59,7 @@ private[cosmos] object KubernetesInstallHandler {
     options: Option[JsonObject],
     packageFiles: PackageFiles
   ): Json = {
-    val logger = org.slf4j.LoggerFactory.getLogger(getClass)
-    logger.info("the Kubernetes Files was: {}", packageFiles)
-    logger.info("the Package options was: {}", options)
     val mergedOptions = mergeOptions(packageFiles, options)
-    logger.info("the merged options was: {}", mergedOptions)
-    logger.info("the Kubernetes Files was xxxxxxxxx: {}", packageFiles)
-
     renderMustacheTemplate(packageFiles, mergedOptions)
 //    val marathonJson = renderMustacheTemplate(packageFiles, mergedOptions)
 //    val marathonJsonWithLabels = addLabels(marathonJson, packageFiles, mergedOptions)
@@ -92,16 +82,7 @@ private[cosmos] object KubernetesInstallHandler {
     packageFiles: PackageFiles,
     options: Option[JsonObject]
   ): Json = {
-    val logger = org.slf4j.LoggerFactory.getLogger(getClass)
-    logger.info("now in mergeOptions")
-    logger.info("The package file in mergeOptions was: {}", packageFiles)
-
     val defaults = extractDefaultsFromConfig(packageFiles.configJson)
-
-    logger.info("The defaults variable was: {}", defaults)
-    logger.info("The package fils was: {} ", packageFiles)
-    logger.info("The package file configjson was: {}", packageFiles.configJson)
-
     val merged: JsonObject = (packageFiles.configJson, options) match {
       case (None, None) => JsonObject.empty
       case (Some(config), None) => validConfig(defaults, config)
@@ -122,18 +103,9 @@ private[cosmos] object KubernetesInstallHandler {
     packageFiles: PackageFiles,
     mergedOptions: Json
   ): Json = {
-            val logger = org.slf4j.LoggerFactory.getLogger(getClass)
-
     val strReader = new StringReader(packageFiles.marathonJsonMustache)
-    logger.info("Marathon package file: {}", packageFiles)
-    logger.info("marathon package file: {}", packageFiles.marathonJsonMustache)
-    logger.info("strReader was: {}", strReader)
     val mustache = MustacheFactory.compile(strReader, "marathon.json.mustache")
-    logger.info("mustache was: {}", mustache)
-
     val params = jsonToJava(mergedOptions)
-    logger.info("params was: {}", params)
-
     val output = new StringWriter()
     mustache.execute(output, params)
     parse(output.toString) match {
