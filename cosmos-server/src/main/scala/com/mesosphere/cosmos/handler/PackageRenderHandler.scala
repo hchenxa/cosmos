@@ -17,7 +17,7 @@ private[cosmos] final class PackageRenderHandler(
   val accepts = MediaTypes.RenderRequest
   val produces = MediaTypes.RenderResponse
 
-  import PackageInstallHandler._
+  import MarathonInstallHandler._
 
   override def apply(request: RenderRequest)(implicit session: RequestSession): Future[RenderResponse] = {
     packageCache

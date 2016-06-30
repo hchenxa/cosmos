@@ -21,6 +21,7 @@ import com.mesosphere.cosmos.circe.Encoders._
 import com.mesosphere.cosmos.handler._
 import com.mesosphere.cosmos.http.{MediaTypes, RequestSession}
 import com.mesosphere.cosmos.model._
+import com.mesosphere.cosmos.model.thirdparty.kubernetes.KubernetesObject
 import com.mesosphere.cosmos.repository.PackageSourcesStorage
 import com.mesosphere.cosmos.repository.UniverseClient
 import com.mesosphere.cosmos.repository.ZooKeeperStorage
@@ -28,7 +29,7 @@ import com.mesosphere.cosmos.repository.ZooKeeperStorage
 private[cosmos] final class Cosmos(
   uninstallHandler: EndpointHandler[UninstallRequest, UninstallResponse],
   kubernetesInstallHandler: EndpointHandler[InstallKubernetesRequest, InstallKubernetesResponse],
-  packageInstallHandler: EndpointHandler[InstallRequest, InstallResponse],
+  marathonInstallHandler: EndpointHandler[InstallMarathonRequest, InstallMarathonResponse],
   packageRenderHandler: EndpointHandler[RenderRequest, RenderResponse],
   packageSearchHandler: EndpointHandler[SearchRequest, SearchResponse],
   packageDescribeHandler: EndpointHandler[DescribeRequest, DescribeResponse],
@@ -41,14 +42,25 @@ private[cosmos] final class Cosmos(
 )(implicit statsReceiver: StatsReceiver = NullStatsReceiver) {
   lazy val logger = org.slf4j.LoggerFactory.getLogger(classOf[Cosmos])
 
+//  val packageInstall: Endpoint[Json] = {
+//    logger.info("Jump into packageInstall init")
+//    def respond(t: (RequestSession, InstallRequest)): Future[Output[Json]] = {
+//      implicit val (session, request) = t
+//      marathonInstallHandler(request)
+//        .map(res => Ok(res.asJson).withContentType(Some(marathonInstallHandler.produces.show)))
+//    }
+//
+//    post("package" / "install" ? marathonInstallHandler.reader)(respond _)
+//  }
+  
   val packageInstall: Endpoint[Json] = {
-    def respond(t: (RequestSession, InstallRequest)): Future[Output[Json]] = {
+    logger.info("Jump into packageInstall init")
+    def respond(t: (RequestSession, InstallKubernetesRequest)): Future[Output[Json]] = {
       implicit val (session, request) = t
-      packageInstallHandler(request)
-        .map(res => Ok(res.asJson).withContentType(Some(packageInstallHandler.produces.show)))
+      kubernetesInstallHandler(request)
+        .map(res => Ok(res.asJson).withContentType(Some(kubernetesInstallHandler.produces.show)))
     }
-
-    post("package" / "install" ? packageInstallHandler.reader)(respond _)
+    post("package" / "install" ? kubernetesInstallHandler.reader)(respond _)
   }
 
   val packageUninstall: Endpoint[Json] = {
@@ -60,16 +72,6 @@ private[cosmos] final class Cosmos(
     }
 
     post("package" / "uninstall" ? uninstallHandler.reader)(respond _)
-  }
-
-// Add Kubernetes install handle here
-  val kubernetesPackageInstall: Endpoint[Json] = {
-    def respond(t: (RequestSession, InstallKubernetesRequest)): Future[Output[Json]] = {
-      implicit val (session, request) = t
-      kubernetesInstallHandler(request)
-        .map(res => Ok(res.asJson).withContentType(Some(kubernetesInstallHandler.produces.show)))
-    }
-    post("package" / "install-kubernetes" ? kubernetesInstallHandler.reader)(respond _)
   }
 
   val packageDescribe: Endpoint[Json] = {
@@ -178,7 +180,7 @@ private[cosmos] final class Cosmos(
     val stats = statsReceiver.scope("errorFilter")
 
     (packageInstall
-      :+: kubernetesPackageInstall
+      :+: packageInstall
       :+: packageRender
       :+: packageDescribe
       :+: packageSearch
@@ -233,31 +235,38 @@ object Cosmos extends FinchServer {
       .map { dh =>
         val dcosHost: String = Uris.stripTrailingSlash(dh)
         val adminRouter: Uri = dcosHost
-        val mar: Uri = marathonUri().toStringRaw
+        val marathon: Uri = dcosHost / "marathon"
+        val k8s: Uri = kubernetesUri().toStringRaw
         val master: Uri = dcosHost / "mesos"
-        (adminRouter, mar, master)
+        logger.info("Connecting to Kubernetes at: {}", k8s)
+        logger.info("Connecting to Mesos master at: {}", master)
+        (adminRouter, marathon, k8s, master)
       }
       .handle {
         case _: IllegalArgumentException =>
           val adminRouter: Uri = adminRouterUri().toStringRaw
-          val mar: Uri = marathonUri().toStringRaw
+          val marathon: Uri = marathonUri().toStringRaw
+          val k8s: Uri = kubernetesUri().toStringRaw
           val master: Uri = mesosMasterUri().toStringRaw
-          logger.info("Connecting to Kubernetes at: {}", mar)
+          logger.info("Connecting to Marathon at: {}", marathon)
+          logger.info("Connecting to Kubernetes at: {}", k8s)
           logger.info("Connecting to Mesos master at: {}", master)
           logger.info("Connection to AdminRouter at: {}", adminRouter)
-          (adminRouter, mar, master)
+          (adminRouter, marathon, k8s, master)
       }
-      .flatMap { case (adminRouterUri, marathonUri, mesosMasterUri) =>
+      .flatMap { case (adminRouterUri, marathonUri, k8sUri, mesosMasterUri) =>
         Trys.join(
           Services.adminRouterClient(adminRouterUri).map { adminRouterUri -> _ },
           Services.marathonClient(marathonUri).map { marathonUri -> _ },
+          Services.kubernetesClient(k8sUri).map { k8sUri -> _ },
           Services.mesosClient(mesosMasterUri).map { mesosMasterUri -> _ }
         )
       }
-      .map { case (adminRouter, marathon, mesosMaster) =>
+      .map { case (adminRouter, marathon, k8s, mesosMaster) =>
         new AdminRouter(
           new AdminRouterClient(adminRouter._1, adminRouter._2),
           new MarathonClient(marathon._1, marathon._2),
+          new KubernetesClient(k8s._1, k8s._2),
           new MesosMasterClient(mesosMaster._1, mesosMaster._2)
         )
       }
@@ -269,9 +278,10 @@ object Cosmos extends FinchServer {
       val zkUri = zookeeperUri()
       logger.info("Using {} for the zookeeper connection", zkUri)
 
-      val marathonPackageRunner = new MarathonPackageRunner(adminRouter)
+      //val marathonPackageRunner = new MarathonPackageRunner(adminRouter)
+      val kubernetesPackageRunner = new KubernetesPackageRunner(adminRouter)
       
-      logger.info("Using {} for the kubernetes package runner", marathonPackageRunner)
+      logger.info("Using {} for the kubernetes package runner", kubernetesPackageRunner)
 
       val zkRetryPolicy = new ExponentialBackoffRetry(1000, 3)
       val zkClient = CuratorFrameworkFactory.builder()
@@ -288,7 +298,7 @@ object Cosmos extends FinchServer {
 
       val sourcesStorage = new ZooKeeperStorage(zkClient)()
 
-      val cosmos = Cosmos(adminRouter, marathonPackageRunner, sourcesStorage, UniverseClient(), dd)
+      val cosmos = Cosmos(adminRouter, kubernetesPackageRunner, sourcesStorage, UniverseClient(), dd)
       cosmos.service
     }
     boot.get
@@ -296,7 +306,7 @@ object Cosmos extends FinchServer {
 
   private[cosmos] def apply(
     adminRouter: AdminRouter,
-    packageRunner: PackageRunner,
+    packageRunner: PackageRunner[KubernetesObject],
     sourcesStorage: PackageSourcesStorage,
     universeClient: UniverseClient,
     dataDir: Path
@@ -307,7 +317,7 @@ object Cosmos extends FinchServer {
     new Cosmos(
       new UninstallHandler(adminRouter, repositories),
       new KubernetesInstallHandler(repositories, packageRunner),
-      new PackageInstallHandler(repositories, packageRunner),
+      new MarathonInstallHandler(repositories, null),
       new PackageRenderHandler(repositories),
       new PackageSearchHandler(repositories),
       new PackageDescribeHandler(repositories),

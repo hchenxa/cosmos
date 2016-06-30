@@ -8,6 +8,7 @@ case class PackageFiles(
   sourceUri: Uri,
   packageJson: PackageDetails,
   marathonJsonMustache: String,
+  kubernetesJsonMustache: String,
   commandJson: Option[Command] = None,
   configJson: Option[JsonObject] = None,
   resourceJson: Option[Resource] = None

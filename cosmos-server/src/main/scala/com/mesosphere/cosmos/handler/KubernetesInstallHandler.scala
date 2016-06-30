@@ -14,14 +14,14 @@ import io.finch.DecodeRequest
 import com.mesosphere.cosmos.http.{MediaTypes, RequestSession}
 import com.mesosphere.cosmos.jsonschema.JsonSchemaValidation
 import com.mesosphere.cosmos.model._
-import com.mesosphere.cosmos.model.thirdparty.kubernetes.KubernetesPod
+import com.mesosphere.cosmos.model.thirdparty.kubernetes._
 import com.mesosphere.cosmos.repository.PackageCollection
 import com.mesosphere.cosmos.{CirceError, JsonSchemaMismatch, PackageFileNotJson, PackageRunner}
 import com.mesosphere.universe.{PackageFiles, Resource}
 
 private[cosmos] final class KubernetesInstallHandler(
   packageCache: PackageCollection,
-  packageRunner: PackageRunner
+  packageRunner: PackageRunner[KubernetesObject]
 )(implicit
   bodyDecoder: DecodeRequest[InstallKubernetesRequest],
   encoder: Encoder[InstallKubernetesResponse]
@@ -38,12 +38,25 @@ private[cosmos] final class KubernetesInstallHandler(
       .flatMap { packageFiles =>
         val packageConfig = preparePackageConfig(request.options, packageFiles)
         packageRunner
-          .launch_1(packageConfig)
+          .launch(packageConfig)
           .map { runnerResponse =>
             val packageName = packageFiles.packageJson.name
             val packageVersion = packageFiles.packageJson.version
-//            val appId = runnerResponse.id
-            InstallKubernetesResponse(packageName, packageVersion)
+            
+            var kind: String = ""
+            var apiVersion: String = ""
+            
+            runnerResponse match {
+              case rc: KubernetesRC => {
+                kind = rc.kind
+                apiVersion = rc.apiVersion
+              }
+              case svc: KubernetesService => {
+                kind = svc.kind
+                apiVersion = svc.apiVersion
+              }
+            }
+            InstallKubernetesResponse(packageName, packageVersion, kind, apiVersion)
           }
       }
   }
@@ -55,19 +68,11 @@ private[cosmos] object KubernetesInstallHandler {
   private[this] val MustacheFactory = new DefaultMustacheFactory()
 
   private[cosmos] def preparePackageConfig(
-//    appId: Option[AppId],
     options: Option[JsonObject],
     packageFiles: PackageFiles
   ): Json = {
     val mergedOptions = mergeOptions(packageFiles, options)
     renderMustacheTemplate(packageFiles, mergedOptions)
-//    val marathonJson = renderMustacheTemplate(packageFiles, mergedOptions)
-//    val marathonJsonWithLabels = addLabels(marathonJson, packageFiles, mergedOptions)
-
-//    appId match {
-//     case Some(id) => marathonJsonWithLabels.mapObject(_ + ("id", id.asJson))
-//      case _ => marathonJsonWithLabels
-//    }
    }
 
   private[this] def validConfig(options: JsonObject, config: JsonObject): JsonObject = {
@@ -103,13 +108,14 @@ private[cosmos] object KubernetesInstallHandler {
     packageFiles: PackageFiles,
     mergedOptions: Json
   ): Json = {
-    val strReader = new StringReader(packageFiles.marathonJsonMustache)
-    val mustache = MustacheFactory.compile(strReader, "marathon.json.mustache")
+    val strReader = new StringReader(packageFiles.kubernetesJsonMustache)
+    val mustache = MustacheFactory.compile(strReader, "kubernetes.json.mustache")
     val params = jsonToJava(mergedOptions)
+
     val output = new StringWriter()
     mustache.execute(output, params)
     parse(output.toString) match {
-      case Xor.Left(err) => throw PackageFileNotJson("marathon.json", err.message)
+      case Xor.Left(err) => throw PackageFileNotJson("kubernetes.json", err.message)
       case Xor.Right(rendered) => rendered
     }
   }
@@ -165,81 +171,6 @@ private[cosmos] object KubernetesInstallHandler {
       jsonObject = _.toMap.mapValues(jsonToJava).asJava
     )
   }
-
-//  private[this] def addLabels(
-//    marathonJson: Json,
-//    packageFiles: PackageFiles,
-//    mergedOptions: Json
-//  ): Json = {
-
-//   val packageMetadataJson = getPackageMetadataJson(packageFiles)
-
-//    val packageMetadata = encodeForLabel(packageMetadataJson)
-
-//    val commandMetadata = packageFiles.commandJson.map { commandJson =>
-//      val bytes = commandJson.asJson.noSpaces.getBytes(Charsets.Utf8)
-//      Base64.getEncoder.encodeToString(bytes)
-//    }
-
-//   val isFramework = packageFiles.packageJson.framework.getOrElse(true)
-
-/*    val requiredLabels: Map[String, String] = Map(
-      (MarathonApp.metadataLabel, packageMetadata),
-      (MarathonApp.registryVersionLabel, packageFiles.packageJson.packagingVersion.toString),
-      (MarathonApp.nameLabel, packageFiles.packageJson.name),
-      (MarathonApp.versionLabel, packageFiles.packageJson.version.toString),
-      (MarathonApp.repositoryLabel, packageFiles.sourceUri.toString),
-      (MarathonApp.releaseLabel, packageFiles.revision),
-      (MarathonApp.isFrameworkLabel, isFramework.toString)
-    )
-*/
-//    val nonOverridableLabels: Map[String, String] = Seq(
-//      commandMetadata.map(MarathonApp.commandLabel -> _)
-//    ).flatten.toMap
-
-//    val hasLabels = marathonJson.cursor.fieldSet.exists(_.contains("labels"))
-//    val existingLabels = if (hasLabels) {
-//       marathonJson.cursor.get[Map[String, String]]("labels") match {
-//          case Xor.Left(df) => throw CirceError(df)
-//          case Xor.Right(labels) => labels
-//        }
-//    } else {
-//      Map.empty[String, String]
-//    }
-
-//    val packageLabels = requiredLabels ++ existingLabels ++ nonOverridableLabels
-//    val packageLabels = existingLabels ++ nonOverridableLabels
-
-//    marathonJson.mapObject(_ + ("labels", packageLabels.asJson))
-//  }
-
-/*  private[this] def getPackageMetadataJson(packageFiles: PackageFiles): Json = {
-    val packageJson = packageFiles.packageJson.asJson
-
-    // add images to package.json metadata for backwards compatability in the UI
-    val imagesJson = packageFiles.resourceJson.map(_.images.asJson)
-    val packageWithImages = imagesJson match {
-      case Some(images) =>
-        packageJson.mapObject(_ + ("images", images))
-      case None =>
-        packageJson
-    }
-
-    removeNulls(packageWithImages)
-  }
-*/
-
-  /** Circe populates omitted fields with null values; remove them (see GitHub issue #56) */
-//  private[this] def removeNulls(json: Json): Json = {
-//    json.mapObject { obj =>
-//      JsonObject.fromMap(obj.toMap.filterNot { case (k, v) => v.isNull })
-//    }
-//  }
-
-//  private[this] def encodeForLabel(json: Json): String = {
-//    val bytes = json.noSpaces.getBytes(Charsets.Utf8)
-//    Base64.getEncoder.encodeToString(bytes)
-//  }
 
   private[cosmos] def merge(target: JsonObject, fragment: JsonObject): JsonObject = {
     fragment.toList.foldLeft(target) { (updatedTarget, fragmentEntry) =>

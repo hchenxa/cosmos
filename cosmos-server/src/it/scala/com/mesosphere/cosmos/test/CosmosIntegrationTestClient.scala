@@ -29,22 +29,25 @@ object CosmosIntegrationTestClient extends Matchers {
     }
       .map { dh =>
         val dcosHost: String = Uris.stripTrailingSlash(dh)
-        val ar: Uri = dcosHost
-        val mar: Uri = dcosHost / "marathon"
-        val mesos: Uri = dcosHost / "mesos"
-        (ar, mar, mesos)
+        val ar: Uri = "http://9.21.60.188"
+        val mar: Uri = "http://9.21.60.188:8080"
+        val mesos: Uri = "http://9.21.60.188:5050"
+        val k8s: Uri = "http://9.111.141.63:8080"
+        (ar, mar, k8s, mesos)
       }
-      .flatMap { case (adminRouterUri, marathonUri, mesosMasterUri) =>
+      .flatMap { case (adminRouterUri, marathonUri,k8sUri, mesosMasterUri) =>
         Trys.join(
           Services.adminRouterClient(adminRouterUri).map { adminRouterUri -> _},
           Services.marathonClient(marathonUri).map { marathonUri -> _ },
+          Services.kubernetesClient(k8sUri).map { k8sUri -> _ },
           Services.mesosClient(mesosMasterUri).map { mesosMasterUri -> _ }
         )
       }
-      .map { case (adminRouterClient, marathon, mesosMaster) =>
+      .map { case (adminRouterClient, marathon, k8s, mesosMaster) =>
         new AdminRouter(
           new AdminRouterClient(adminRouterClient._1, adminRouterClient._2),
           new MarathonClient(marathon._1, marathon._2),
+          new KubernetesClient(k8s._1, k8s._2),
           new MesosMasterClient(mesosMaster._1, mesosMaster._2)
         )
       }
@@ -75,10 +78,12 @@ object CosmosIntegrationTestClient extends Matchers {
       .get
 
     def requestBuilder(endpointPath: String): RequestBuilder[Yes, Nothing] = Session match {
-      case RequestSession(Some(auth)) =>
+      case RequestSession(Some(auth)) => {
+        logger.info(s"URL => http://localhost:7070/$endpointPath")
         RequestBuilder()
           .url(s"http://localhost:7070/$endpointPath")
           .setHeader("Authorization", auth.headerValue)
+      }
       case _ =>
         RequestBuilder()
           .url(s"http://localhost:7070/$endpointPath")

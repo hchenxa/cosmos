@@ -14,7 +14,9 @@ import org.jboss.netty.handler.codec.http.HttpMethod
 abstract class ServiceClient(baseUri: Uri) {
 
   private[this] val cleanedBaseUri: String = Uris.stripTrailingSlash(baseUri)
-
+  
+  val logger = org.slf4j.LoggerFactory.getLogger(getClass)
+  
   protected def get(uri: Uri)(implicit session: RequestSession): Request = {
     baseRequestBuilder(uri)
       .setHeader("Accept", MediaTypes.applicationJson.show)
@@ -24,12 +26,6 @@ abstract class ServiceClient(baseUri: Uri) {
   protected def post(uri: Uri, jsonBody: Json)(implicit session: RequestSession): Request = {
     baseRequestBuilder(uri)
       .setHeader("Accept", MediaTypes.applicationJson.show)
-      .setHeader("Content-Type", MediaTypes.applicationJson.show)
-      .buildPost(Buf.Utf8(jsonBody.noSpaces))
-  }
-
-  protected def post_1(uri: Uri, jsonBody: Json)(implicit session: RequestSession): Request = {
-    baseRequestBuilder(uri)
       .setHeader("Content-Type", MediaTypes.applicationJson.show)
       .buildPost(Buf.Utf8(jsonBody.noSpaces))
   }

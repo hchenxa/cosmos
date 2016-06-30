@@ -22,7 +22,7 @@ final class UserOptionsSpec extends UnitSpec {
     "should pass on all examples" in {
       forAll (Examples) { (defaultsJson, optionsJson, mergedJson) =>
         assertResult(mergedJson) {
-          PackageInstallHandler.merge(defaultsJson, optionsJson)
+          MarathonInstallHandler.merge(defaultsJson, optionsJson)
         }
       }
     }
@@ -30,7 +30,7 @@ final class UserOptionsSpec extends UnitSpec {
     "should happen as part of package install" in {
       forAll (Examples) { (defaultsJson, optionsJson, mergedJson) =>
         val packageName = "options-test"
-        val reqBody = InstallRequest(packageName, None, Some(optionsJson))
+        val reqBody = InstallMarathonRequest(packageName, None, Some(optionsJson))
         val mustacheTemplate = buildMustacheTemplate(mergedJson)
 
         val packageFiles = PackageFiles(
@@ -44,6 +44,7 @@ final class UserOptionsSpec extends UnitSpec {
             description = "Testing user options"
           ),
           marathonJsonMustache = mustacheTemplate,
+          kubernetesJsonMustache = mustacheTemplate,
           configJson = Some(buildConfig(Json.fromJsonObject(defaultsJson)))
         )
         val packages = Map(packageName -> packageFiles)
@@ -57,7 +58,8 @@ final class UserOptionsSpec extends UnitSpec {
         import io.finch.circe._
         val cosmos = new Cosmos(
           EndpointHandler.const(UninstallResponse(Nil)),
-          new PackageInstallHandler(packageCache, packageRunner),
+          EndpointHandler.const(InstallKubernetesResponse("test", PackageDetailsVersion("0.1"), "Service", "v1")),
+          new MarathonInstallHandler(packageCache, packageRunner),
           new PackageRenderHandler(packageCache),
           EndpointHandler.const(SearchResponse(List.empty)),
           EndpointHandler.const(
@@ -72,8 +74,8 @@ final class UserOptionsSpec extends UnitSpec {
         )
         val request = RequestBuilder()
           .url("http://dummy.cosmos.host/package/install")
-          .addHeader("Content-Type", MediaTypes.InstallRequest.show)
-          .addHeader("Accept", MediaTypes.InstallResponse.show)
+          .addHeader("Content-Type", MediaTypes.InstallMarathonRequest.show)
+          .addHeader("Accept", MediaTypes.InstallMarathonResponse.show)
           .buildPost(Buf.Utf8(reqBody.asJson.noSpaces))
 
         val Some((_, eval)) = cosmos.packageInstall(Input(request))
@@ -186,11 +188,11 @@ final class UserOptionsSpec extends UnitSpec {
 
 }
 
-private final class RecordingPackageRunner extends PackageRunner {
+private final class RecordingPackageRunner extends PackageRunner[MarathonApp] {
 
   private[cosmos] var marathonJson: Option[Json] = None
 
-  override def launch(renderedConfig: Json)(implicit session: RequestSession): Future[MarathonApp] = {
+  override def launch(renderedConfig: Json, option: Option[String] = None)(implicit session: RequestSession): Future[MarathonApp] = {
     marathonJson = Some(renderedConfig)
     val Xor.Right(id) = renderedConfig.cursor.get[AppId]("id")
     Future.value(MarathonApp(id, Map.empty, List.empty, 0.0, 0.0, 1, None, None))

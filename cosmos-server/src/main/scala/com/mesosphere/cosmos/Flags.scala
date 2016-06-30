@@ -18,7 +18,7 @@ object adminRouterUri extends GlobalFlag[Uri](
 )
 
 object marathonUri extends GlobalFlag[Uri](
-  Uri.parse("http://9.111.141.63:8080"),
+  Uri.parse("http://leader.mesos:8080"),
   "The URI where marathon can be found"
 )
 
@@ -28,16 +28,14 @@ object mesosMasterUri extends GlobalFlag[Uri](
 )
 
 object zookeeperUri extends GlobalFlag[ZooKeeperUri](
-  ZooKeeperUri.parse("zk://9.21.63.10:2181/cosmos").get(),
+  ZooKeeperUri.parse("zk://127.0.0.1:2181/cosmos").get(),
   "The ZooKeeper connection string"
 )
 
-/*
 object kubernetesUri extends GlobalFlag[Uri](
-  ZooKeeperUri.parse("http://9.21.58.21:8080").get(),
+  Uri.parse("http://127.0.0.1:8080"),
   "The kubernetes URI connection string"
 )
-*/
 
 object dataDir extends GlobalFlag[file.Path](
   file.Paths.get("/var/lib/cosmos"),

@@ -2,9 +2,8 @@ package com.mesosphere.cosmos.model
 
 import com.mesosphere.universe.PackageDetailsVersion
 
-case class InstallKubernetesResponse(
+case class InstallMarathonResponse(
   packageName: String,
   packageVersion: PackageDetailsVersion,
-  kind: String,
-  apiVersion: String
+  appId: AppId
 ) extends InstallResponse(packageName, packageVersion)

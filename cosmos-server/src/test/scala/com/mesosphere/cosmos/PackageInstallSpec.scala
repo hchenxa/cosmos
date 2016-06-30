@@ -1,7 +1,7 @@
 package com.mesosphere.cosmos
 
 import cats.data.Xor
-import com.mesosphere.cosmos.handler.PackageInstallHandler
+import com.mesosphere.cosmos.handler.MarathonInstallHandler
 import com.netaporter.uri.dsl._
 import com.mesosphere.universe.{PackageDetails, PackageDetailsVersion, PackageFiles, PackagingVersion}
 import org.scalatest.prop.TableDrivenPropertyChecks
@@ -45,7 +45,7 @@ class PackageInstallSpec extends FreeSpec with Matchers with TableDrivenProperty
       //          val packageCache = MemoryPackageCache(packages)
       //          val packageRunner = new RecordingPackageRunner
 
-      //          new PackageInstallHandler(
+      //          new MarathonInstallHandler(
       //            MemoryPackageCache.apply()
       //          )
       //          apiClient.installPackageAndAssert(
@@ -79,7 +79,17 @@ class PackageInstallSpec extends FreeSpec with Matchers with TableDrivenProperty
   }
 
   "if the labels object from marathon.json.mustache isn't Map[String, String] an error is returned" in {
-    val mustache =
+    val marathonMustache =
+      """
+        |{
+        |  "labels": {
+        |    "idx": 0,
+        |    "string": "value"
+        |  }
+        |}
+      """.stripMargin
+      
+    val kubernetesMustache =
       """
         |{
         |  "labels": {
@@ -99,11 +109,12 @@ class PackageInstallSpec extends FreeSpec with Matchers with TableDrivenProperty
         maintainer = "foo@bar.baz",
         description = "blah"
       ),
-      marathonJsonMustache = mustache
+      marathonJsonMustache = marathonMustache,
+      kubernetesJsonMustache = kubernetesMustache
     )
 
     try {
-      val json = PackageInstallHandler.preparePackageConfig(None, None, pf)
+      val json = MarathonInstallHandler.preparePackageConfig(None, None, pf)
 
       val _ = for {
         i <- json.hcursor.downField("labels").downField("idx").as[Int]
@@ -119,7 +130,7 @@ class PackageInstallSpec extends FreeSpec with Matchers with TableDrivenProperty
   }
 
   "if the labels object from marathon.json.mustache does not exist, a default empty object is used" in {
-    val mustache =
+    val marathonMustache =
       """
         |{
         |  "env": {
@@ -128,6 +139,15 @@ class PackageInstallSpec extends FreeSpec with Matchers with TableDrivenProperty
         |}
       """.stripMargin
 
+    val kubernetesMustache =
+      """
+        |{
+        |  "env": {
+        |    "some": "thing"
+        |  }
+        |}
+      """.stripMargin
+      
     val pf = PackageFiles(
       revision = "0",
       sourceUri = "http://someplace",
@@ -138,10 +158,11 @@ class PackageInstallSpec extends FreeSpec with Matchers with TableDrivenProperty
         maintainer = "foo@bar.baz",
         description = "blah"
       ),
-      marathonJsonMustache = mustache
+      marathonJsonMustache = marathonMustache,
+      kubernetesJsonMustache = kubernetesMustache
     )
 
-    val json = PackageInstallHandler.preparePackageConfig(None, None, pf)
+    val json = MarathonInstallHandler.preparePackageConfig(None, None, pf)
 
     val Xor.Right(some) = for {
       i <- json.hcursor.downField("env").downField("some").as[String]

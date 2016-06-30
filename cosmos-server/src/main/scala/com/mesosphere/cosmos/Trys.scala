@@ -18,5 +18,14 @@ object Trys {
       cc <- c
     } yield { (aa, bb, cc) }
   }
+  
+  def join[A, B, C, D](a: Try[A], b: Try[B], c: Try[C], d: Try[D]): Try[(A, B, C, D)] = {
+    for {
+      aa <- a
+      bb <- b
+      cc <- c
+      dd <- d
+    } yield { (aa, bb, cc, dd) }
+  }
 
 }

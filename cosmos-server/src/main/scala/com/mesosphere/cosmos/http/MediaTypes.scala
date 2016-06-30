@@ -18,8 +18,8 @@ object MediaTypes {
   val ListResponse = vnd("list-response")
 
   val ErrorResponse = vnd("error")
-  val InstallRequest = vnd("install-request")
-  val InstallResponse = vnd("install-response")
+  val InstallMarathonRequest = vnd("install-marathon-request")
+  val InstallMarathonResponse = vnd("install-marathon-response")
   // Add Kubernetes install request and response
   val InstallKubernetesRequest = vnd("install-kubernetes-request")
   val InstallKubernetesResponse = vnd("install-kubernetes-response")

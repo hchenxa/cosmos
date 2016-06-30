@@ -400,6 +400,7 @@ object UniversePackageCache {
           packageDir.getFileName.toString,
           universeBundle,
           packageDef,
+          "",
           mustache,
           commandJson,
           configJson,

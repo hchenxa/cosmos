@@ -19,20 +19,20 @@ import com.mesosphere.cosmos.repository.PackageCollection
 import com.mesosphere.cosmos.{CirceError, JsonSchemaMismatch, PackageFileNotJson, PackageRunner}
 import com.mesosphere.universe.{PackageFiles, Resource}
 
-private[cosmos] final class PackageInstallHandler(
+private[cosmos] final class MarathonInstallHandler(
   packageCache: PackageCollection,
-  packageRunner: PackageRunner
+  packageRunner: PackageRunner[MarathonApp]
 )(implicit
-  bodyDecoder: DecodeRequest[InstallRequest],
-  encoder: Encoder[InstallResponse]
-) extends EndpointHandler[InstallRequest, InstallResponse] {
+  bodyDecoder: DecodeRequest[InstallMarathonRequest],
+  encoder: Encoder[InstallMarathonResponse]
+) extends EndpointHandler[InstallMarathonRequest, InstallMarathonResponse] {
 
-  val accepts = MediaTypes.InstallRequest
-  val produces = MediaTypes.InstallResponse
+  val accepts = MediaTypes.InstallMarathonRequest
+  val produces = MediaTypes.InstallMarathonResponse
 
-  import PackageInstallHandler._
+  import MarathonInstallHandler._
 
-  override def apply(request: InstallRequest)(implicit session: RequestSession): Future[InstallResponse] = {
+  override def apply(request: InstallMarathonRequest)(implicit session: RequestSession): Future[InstallMarathonResponse] = {
     packageCache
       .getPackageByPackageVersion(request.packageName, request.packageVersion)
       .flatMap { packageFiles =>
@@ -43,13 +43,13 @@ private[cosmos] final class PackageInstallHandler(
             val packageName = packageFiles.packageJson.name
             val packageVersion = packageFiles.packageJson.version
             val appId = runnerResponse.id
-            InstallResponse(packageName, packageVersion, appId)
+            InstallMarathonResponse(packageName, packageVersion, appId)
           }
       }
   }
 }
 
-private[cosmos] object PackageInstallHandler {
+private[cosmos] object MarathonInstallHandler {
 
   import com.mesosphere.cosmos.circe.Encoders._  //TODO: Not crazy about this being here
   private[this] val MustacheFactory = new DefaultMustacheFactory()

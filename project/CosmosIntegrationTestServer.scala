@@ -48,6 +48,11 @@ class CosmosIntegrationTestServer(javaHome: Option[String], itResourceDirs: Seq[
       .orElse(systemProperty("java.home").map(jre => s"$jre/bin/java"))
       .getOrElse("java")
 
+    System.setProperty(
+      "com.mesosphere.cosmos.dcosUri",
+      "http://localhost:4200"
+    )
+    
     val dcosUri = systemProperty("com.mesosphere.cosmos.dcosUri").get
     System.setProperty(
       "com.mesosphere.cosmos.test.CosmosIntegrationTestClient.CosmosClient.uri",

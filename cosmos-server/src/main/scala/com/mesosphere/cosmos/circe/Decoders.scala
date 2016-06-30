@@ -79,25 +79,34 @@ object Decoders {
   implicit val decodePackageFiles: Decoder[PackageFiles] = deriveFor[PackageFiles].decoder
   implicit val decodeSearchRequest: Decoder[SearchRequest] = deriveFor[SearchRequest].decoder
   implicit val decodeSearchResponse: Decoder[SearchResponse] = deriveFor[SearchResponse].decoder
-  implicit val decodeInstallRequest: Decoder[InstallRequest] = deriveFor[InstallRequest].decoder
-  implicit val decodeInstallResponse: Decoder[InstallResponse] = deriveFor[InstallResponse].decoder
+  implicit val decodeInstallRequest: Decoder[InstallMarathonRequest] = deriveFor[InstallMarathonRequest].decoder
+  implicit val decodeInstallResponse: Decoder[InstallMarathonResponse] = deriveFor[InstallMarathonResponse].decoder
   implicit val decodeUninstallRequest: Decoder[UninstallRequest] = deriveFor[UninstallRequest].decoder
   implicit val decodeUninstallResponse: Decoder[UninstallResponse] = deriveFor[UninstallResponse].decoder
   implicit val decodeUninstallResult: Decoder[UninstallResult] = deriveFor[UninstallResult].decoder
 
   implicit val decodeRenderRequest: Decoder[RenderRequest] = deriveFor[RenderRequest].decoder
   implicit val decodeRenderResponse: Decoder[RenderResponse] = deriveFor[RenderResponse].decoder
-// Add kubernete decode implicit function
-  implicit val decodeKubernetesPodResponse: Decoder[KubernetesPodResponse] = deriveFor[KubernetesPodResponse].decoder
-  implicit val decodeKubernetesPodsResponse: Decoder[KubernetesPodsResponse] = deriveFor[KubernetesPodsResponse].decoder
-  implicit val decodeKubernetesPodContainer: Decoder[KubernetesPodContainer] = deriveFor[KubernetesPodContainer].decoder
-  implicit val decodeKubernetesPodMetadata: Decoder[KubernetesPodMetadata] = deriveFor[KubernetesPodMetadata].decoder
-  implicit val decodeKubernetesPodSpec: Decoder[KubernetesPodSpec] = deriveFor[KubernetesPodSpec].decoder
-  implicit val decodeKubernetesPod: Decoder[KubernetesPod] = deriveFor[KubernetesPod].decoder
+  
+// Add Kubernetes decode implicit function
+  implicit val decodeKubernetesRCResponse: Decoder[KubernetesRCResponse] = deriveFor[KubernetesRCResponse].decoder
+  implicit val decodeKubernetesRCsResponse: Decoder[KubernetesRCsResponse] = deriveFor[KubernetesRCsResponse].decoder
+  implicit val decodeKubernetesRCMedadata: Decoder[KubernetesRCMetadata] = deriveFor[KubernetesRCMetadata].decoder
+  implicit val decodeKubernetesRCTemplateMetadata: Decoder[KubernetesRCTemplateMetadata] = deriveFor[KubernetesRCTemplateMetadata].decoder
+  implicit val decodeKubernetesRCTemplateContainer: Decoder[KubernetesRCTemplateContainer] = deriveFor[KubernetesRCTemplateContainer].decoder
+  implicit val decodeKubernetesRCTemplateSpec: Decoder[KubernetesRCTemplateSpec] = deriveFor[KubernetesRCTemplateSpec].decoder
+  implicit val decodeKubernetesRCTemplate: Decoder[KubernetesRCTemplate] = deriveFor[KubernetesRCTemplate].decoder
+  implicit val decodeKubernetesRCSpec: Decoder[KubernetesRCSpec] = deriveFor[KubernetesRCSpec].decoder
+  implicit val decodeKubernetesRCStatus: Decoder[KubernetesRCStatus] = deriveFor[KubernetesRCStatus].decoder
+  implicit val decodeKubernetesRC: Decoder[KubernetesRC] = deriveFor[KubernetesRC].decoder
+  implicit val decodeKubernetesServiceResponse: Decoder[KubernetesServiceResponse] = deriveFor[KubernetesServiceResponse].decoder
+  implicit val decodeKubernetesServicesResponse: Decoder[KubernetesServicesResponse] = deriveFor[KubernetesServicesResponse].decoder
+  implicit val decodeKubernetesServicePorts: Decoder[KubernetesServicePorts] = deriveFor[KubernetesServicePorts].decoder
+  implicit val decodeKubernetesServiceMetadata: Decoder[KubernetesServiceMetadata] = deriveFor[KubernetesServiceMetadata].decoder
+  implicit val decodeKubernetesServiceSpec: Decoder[KubernetesServiceSpec] = deriveFor[KubernetesServiceSpec].decoder
+  implicit val decodeKubernetesService: Decoder[KubernetesService] = deriveFor[KubernetesService].decoder
   implicit val decodeInstallKubernetesRequest: Decoder[InstallKubernetesRequest] = deriveFor[InstallKubernetesRequest].decoder
   implicit val decodeInstallKubernetesResponse: Decoder[InstallKubernetesResponse] = deriveFor[InstallKubernetesResponse].decoder
-
-
 
   implicit val decodeCommandDefinition: Decoder[Command] = deriveFor[Command].decoder
   implicit val decodeDescribeResponse: Decoder[DescribeResponse] = deriveFor[DescribeResponse].decoder
@@ -115,7 +124,8 @@ object Decoders {
 
   implicit val decodeErrorResponse: Decoder[ErrorResponse] = deriveFor[ErrorResponse].decoder
   implicit val decodeMarathonError: Decoder[MarathonError] = deriveFor[MarathonError].decoder
-
+  implicit val decodeKubernetesError: Decoder[KubernetesError] = deriveFor[KubernetesError].decoder
+  
   implicit val decodeUri: Decoder[Uri] = Decoder.decodeString.map(Uri.parse)
 
   implicit val decodeListRequest: Decoder[ListRequest] = deriveFor[ListRequest].decoder

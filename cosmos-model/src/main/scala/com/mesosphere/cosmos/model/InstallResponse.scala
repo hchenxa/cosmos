@@ -2,8 +2,7 @@ package com.mesosphere.cosmos.model
 
 import com.mesosphere.universe.PackageDetailsVersion
 
-case class InstallResponse(
+abstract class InstallResponse(
   packageName: String,
-  packageVersion: PackageDetailsVersion,
-  appId: AppId
+  packageVersion: PackageDetailsVersion
 )

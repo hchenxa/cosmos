@@ -21,8 +21,8 @@ final class UninstallHandlerSpec extends FreeSpec {
   "The uninstall handler should" - {
     "be able to uninstall a service" in {
       val installRequest = CosmosClient.requestBuilder("package/install")
-        .addHeader("Content-Type", MediaTypes.InstallRequest.show)
-        .addHeader("Accept", MediaTypes.InstallResponse.show)
+        .addHeader("Content-Type", MediaTypes.InstallMarathonRequest.show)
+        .addHeader("Accept", MediaTypes.InstallMarathonResponse.show)
         .buildPost(Buf.Utf8("""{"packageName":"cassandra","options":{}}"""))
       val installResponse = CosmosClient(installRequest)
       assertResult(Status.Ok)(installResponse.status)
@@ -49,16 +49,16 @@ final class UninstallHandlerSpec extends FreeSpec {
       // install 'helloworld' twice
       val installBody1 = s"""{"packageName":"helloworld", "appId":"${UUID.randomUUID()}"}"""
       val installRequest1 = CosmosClient.requestBuilder("package/install")
-        .addHeader("Content-Type", MediaTypes.InstallRequest.show)
-        .addHeader("Accept", MediaTypes.InstallResponse.show)
+        .addHeader("Content-Type", MediaTypes.InstallMarathonRequest.show)
+        .addHeader("Accept", MediaTypes.InstallMarathonResponse.show)
         .buildPost(Buf.Utf8(installBody1))
       val installResponse1 = CosmosClient(installRequest1)
       assertResult(Status.Ok, s"install failed: $installBody1")(installResponse1.status)
 
       val installBody2 = s"""{"packageName":"helloworld", "appId":"${UUID.randomUUID()}"}"""
       val installRequest2 = CosmosClient.requestBuilder("package/install")
-        .addHeader("Content-Type", MediaTypes.InstallRequest.show)
-        .addHeader("Accept", MediaTypes.InstallResponse.show)
+        .addHeader("Content-Type", MediaTypes.InstallMarathonRequest.show)
+        .addHeader("Accept", MediaTypes.InstallMarathonResponse.show)
         .buildPost(Buf.Utf8(installBody2))
       val installResponse2 = CosmosClient(installRequest2)
       assertResult(Status.Ok, s"install failed: $installBody2")(installResponse2.status)
@@ -77,8 +77,8 @@ final class UninstallHandlerSpec extends FreeSpec {
       val appId1 = UUID.randomUUID()
       val installBody1 = s"""{"packageName":"helloworld", "appId":"$appId1"}"""
       val installRequest1 = CosmosClient.requestBuilder("package/install")
-        .addHeader("Content-Type", MediaTypes.InstallRequest.show)
-        .addHeader("Accept", MediaTypes.InstallResponse.show)
+        .addHeader("Content-Type", MediaTypes.InstallMarathonRequest.show)
+        .addHeader("Accept", MediaTypes.InstallMarathonResponse.show)
         .buildPost(Buf.Utf8(installBody1))
       val installResponse1 = CosmosClient(installRequest1)
       assertResult(Status.Ok, s"install failed: $installBody1")(installResponse1.status)
@@ -86,8 +86,8 @@ final class UninstallHandlerSpec extends FreeSpec {
       val appId2 = UUID.randomUUID()
       val installBody2 = s"""{"packageName":"helloworld", "appId":"$appId2"}"""
       val installRequest2 = CosmosClient.requestBuilder("package/install")
-        .addHeader("Content-Type", MediaTypes.InstallRequest.show)
-        .addHeader("Accept", MediaTypes.InstallResponse.show)
+        .addHeader("Content-Type", MediaTypes.InstallMarathonRequest.show)
+        .addHeader("Accept", MediaTypes.InstallMarathonResponse.show)
         .buildPost(Buf.Utf8(installBody2))
       val installResponse2 = CosmosClient(installRequest2)
       assertResult(Status.Ok, s"install failed: $installBody2")(installResponse2.status)

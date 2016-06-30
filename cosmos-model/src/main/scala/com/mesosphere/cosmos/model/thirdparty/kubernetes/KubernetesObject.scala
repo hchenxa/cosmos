@@ -1,7 +1,6 @@
 package com.mesosphere.cosmos.model.thirdparty.kubernetes
 
-case class KubernetesPod(
+abstract class KubernetesObject(
   apiVersion: String,
   kind: String
 )
-

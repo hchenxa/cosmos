@@ -18,13 +18,15 @@ object Services {
   }
 
   def marathonClient(uri: Uri): Try[Service[Request, Response]] = {
-    val logger = org.slf4j.LoggerFactory.getLogger(getClass)
-    logger.info("kubernetes Uri is: {}", uri)
     httpClient("marathon", uri)
   }
 
   def mesosClient(uri: Uri): Try[Service[Request, Response]] = {
     httpClient("mesos", uri)
+  }
+  
+  def kubernetesClient(uri: Uri): Try[Service[Request, Response]] = {
+    httpClient("kubernetes", uri)
   }
 
   def httpClient(

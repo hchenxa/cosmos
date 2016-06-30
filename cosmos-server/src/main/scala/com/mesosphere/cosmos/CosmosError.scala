@@ -3,6 +3,7 @@ package com.mesosphere.cosmos
 import cats.data.{Ior, NonEmptyList}
 import com.mesosphere.cosmos.circe.Encoders._
 import com.mesosphere.cosmos.http.MediaType
+import com.mesosphere.cosmos.model.thirdparty.kubernetes.KubernetesError
 import com.mesosphere.cosmos.model.thirdparty.marathon.MarathonError
 import com.mesosphere.cosmos.model.{AppId, PackageRepository}
 import com.mesosphere.universe.{PackageDetailsVersion, UniverseVersion}
@@ -71,6 +72,27 @@ case class MarathonAppMetadataError(note: String) extends CosmosError
 case class MarathonAppDeleteError(appId: AppId) extends CosmosError
 case class MarathonAppNotFound(appId: AppId) extends CosmosError
 case class MesosRequestError(note: String) extends CosmosError
+
+//Kubernetes Errors
+case class KubernetesBadResponse(kubernetesError: KubernetesError) extends CosmosError {
+  val details = kubernetesError.details match {
+    case Some(details) => Some(JsonObject.singleton("errors", details.asJson))
+    case None => None
+  }
+  override def getData: Option[JsonObject] = details
+}
+case class KubernetesGenericError(kubernetesStatus: Status) extends CosmosError {
+  override val status = Status.InternalServerError
+}
+case class KubernetesBadGateway(kubernetesStatus: Status) extends CosmosError {
+  override val status = Status.BadGateway
+}
+case class KubernetesRCDeleteError(rc: String) extends CosmosError
+case class KubernetesRCNotFound(rc: String) extends CosmosError
+case class KubernetesServiceDeleteError(service: String) extends CosmosError
+case class KubernetesServiceNotFound(service: String) extends CosmosError
+case class kubernetesInvalidPackageError(message: String)  extends CosmosError
+
 case class CirceError(cerr: io.circe.Error) extends CosmosError
 
 case class UnsupportedContentType(supported: List[MediaType], actual: Option[MediaType] = None) extends CosmosError

@@ -15,8 +15,8 @@ class ErrorResponseSpec extends FreeSpec {
   "An ErrorResponse should be returned as the body when a request can't be parsed" in {
     val requestString = Map("invalid" -> true).asJson.noSpaces
     val post = CosmosClient.requestBuilder("package/install")
-      .addHeader("Content-Type", MediaTypes.InstallRequest.show)
-      .addHeader("Accept", MediaTypes.InstallResponse.show)
+      .addHeader("Content-Type", MediaTypes.InstallMarathonRequest.show)
+      .addHeader("Accept", MediaTypes.InstallMarathonResponse.show)
       .buildPost(Buf.Utf8(requestString))
     val response = CosmosClient(post)
 

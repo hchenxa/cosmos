@@ -77,8 +77,8 @@ object Encoders {
   implicit val encodePackageFiles: Encoder[PackageFiles] = deriveFor[PackageFiles].encoder
   implicit val encodeSearchRequest: Encoder[SearchRequest] = deriveFor[SearchRequest].encoder
   implicit val encodeSearchResponse: Encoder[SearchResponse] = deriveFor[SearchResponse].encoder
-  implicit val encodeInstallRequest: Encoder[InstallRequest] = deriveFor[InstallRequest].encoder
-  implicit val encodeInstallResponse: Encoder[InstallResponse] = deriveFor[InstallResponse].encoder
+  implicit val encodeInstallRequest: Encoder[InstallMarathonRequest] = deriveFor[InstallMarathonRequest].encoder
+  implicit val encodeInstallResponse: Encoder[InstallMarathonResponse] = deriveFor[InstallMarathonResponse].encoder
   implicit val encodeUninstallRequest: Encoder[UninstallRequest] = deriveFor[UninstallRequest].encoder
   implicit val encodeUninstallResponse: Encoder[UninstallResponse] = deriveFor[UninstallResponse].encoder
   implicit val encodeUninstallResult: Encoder[UninstallResult] = deriveFor[UninstallResult].encoder
@@ -95,7 +95,8 @@ object Encoders {
 
   implicit val encodeErrorResponse: Encoder[ErrorResponse] = deriveFor[ErrorResponse].encoder
   implicit val encodeMarathonError: Encoder[MarathonError] = deriveFor[MarathonError].encoder
-
+  implicit val encodeKubernetesError: Encoder[KubernetesError] = deriveFor[KubernetesError].encoder
+  
   implicit val encodeUri: Encoder[Uri] = Encoder.instance(_.toString.asJson)
 
   implicit val encodeListRequest: Encoder[ListRequest] = deriveFor[ListRequest].encoder
@@ -103,17 +104,25 @@ object Encoders {
   implicit val encodeInstallation: Encoder[Installation] = deriveFor[Installation].encoder
   implicit val encodePackageInformation: Encoder[InstalledPackageInformation] = deriveFor[InstalledPackageInformation].encoder
 
-// Add kubernete decode implicit function
-  implicit val encodeKubernetesPodResponse: Encoder[KubernetesPodResponse] = deriveFor[KubernetesPodResponse].encoder
-  implicit val encodeKubernetesPodsResponse: Encoder[KubernetesPodsResponse] = deriveFor[KubernetesPodsResponse].encoder
-  implicit val encodeKubernetesPodContainer: Encoder[KubernetesPodContainer] = deriveFor[KubernetesPodContainer].encoder
-  implicit val encodeKubernetesPodMetadata: Encoder[KubernetesPodMetadata] = deriveFor[KubernetesPodMetadata].encoder
-  implicit val encodeKubernetesPodSpec: Encoder[KubernetesPodSpec] = deriveFor[KubernetesPodSpec].encoder
-  implicit val encodeKubernetesPod: Encoder[KubernetesPod] = deriveFor[KubernetesPod].encoder
+// Add Kubernetes decode implicit function
+  implicit val encodeKubernetesRCResponse: Encoder[KubernetesRCResponse] = deriveFor[KubernetesRCResponse].encoder
+  implicit val encodeKubernetesRCsResponse: Encoder[KubernetesRCsResponse] = deriveFor[KubernetesRCsResponse].encoder
+  implicit val encodeKubernetesRC: Encoder[KubernetesRC] = deriveFor[KubernetesRC].encoder
+  implicit val encodeKubernetesServiceResponse: Encoder[KubernetesServiceResponse] = deriveFor[KubernetesServiceResponse].encoder
+  implicit val encodeKubernetesServicesResponse: Encoder[KubernetesServicesResponse] = deriveFor[KubernetesServicesResponse].encoder
+  implicit val encodeKubernetesService: Encoder[KubernetesService] = deriveFor[KubernetesService].encoder
+  implicit val encodeKubernetesServiceMetadata: Encoder[KubernetesServiceMetadata] = deriveFor[KubernetesServiceMetadata].encoder
+  implicit val encodeKubernetesServiceSpec: Encoder[KubernetesServiceSpec] = deriveFor[KubernetesServiceSpec].encoder  
+  implicit val encodeKubernetesServicePorts: Encoder[KubernetesServicePorts] = deriveFor[KubernetesServicePorts].encoder
+  implicit val encodeKubernetesRCMetadata: Encoder[KubernetesRCMetadata] = deriveFor[KubernetesRCMetadata].encoder
+  implicit val encodeKubernetesRCSpec: Encoder[KubernetesRCSpec] = deriveFor[KubernetesRCSpec].encoder
+  implicit val encodeKubernetesRCTemplate: Encoder[KubernetesRCTemplate] = deriveFor[KubernetesRCTemplate].encoder
+  implicit val encodeKubernetesRCTemplateMetadata: Encoder[KubernetesRCTemplateMetadata] = deriveFor[KubernetesRCTemplateMetadata].encoder
+  implicit val encodeKubernetesRCTemplateSpec: Encoder[KubernetesRCTemplateSpec] = deriveFor[KubernetesRCTemplateSpec].encoder
+  implicit val encodeKubernetesRCTemplateContainer: Encoder[KubernetesRCTemplateContainer] = deriveFor[KubernetesRCTemplateContainer].encoder
+  implicit val encodeKubernetesRCStatus: Encoder[KubernetesRCStatus] = deriveFor[KubernetesRCStatus].encoder
   implicit val encodeInstallKubernetesRequest: Encoder[InstallKubernetesRequest] = deriveFor[InstallKubernetesRequest].encoder
   implicit val encodeInstallKubernetesResponse: Encoder[InstallKubernetesResponse] = deriveFor[InstallKubernetesResponse].encoder
-
-
 
   implicit val encodeUniverseVersion: Encoder[UniverseVersion] = Encoder.instance(_.toString.asJson)
   implicit val encodePackagingVersion: Encoder[PackagingVersion] = Encoder.instance(_.toString.asJson)
@@ -248,6 +257,20 @@ object Encoders {
       s"Package file [$fileName] does not match schema"
     case PackageAlreadyInstalled() =>
       "Package is already installed"
+    case KubernetesBadResponse(kubernetesErr) => kubernetesErr.message
+    case KubernetesGenericError(kubernetesStatus) =>
+      s"Received response status code ${kubernetesStatus.code} from Kubernetes"
+    case KubernetesBadGateway(kubernetesStatus) =>
+      s"Received response status code ${kubernetesStatus.code} from Kubernetes"
+    case KubernetesRCDeleteError(rc) =>
+      s"Error while deleting Kubernetes ReplicationController '$rc'"
+    case KubernetesRCNotFound(rc) =>
+      s"Unable to locate Kubernetes ReplicationController with name: '$rc'"
+    case KubernetesServiceDeleteError(svc) =>
+      s"Error while deleting Kubernetes Service '$svc'"
+    case KubernetesServiceNotFound(svc) =>
+      s"Unable to locate Kubernetes Service with name: '$svc'"
+    case kubernetesInvalidPackageError(msg) => msg
     case MarathonBadResponse(marathonErr) => marathonErr.message
     case MarathonGenericError(marathonStatus) =>
       s"Received response status code ${marathonStatus.code} from Marathon"

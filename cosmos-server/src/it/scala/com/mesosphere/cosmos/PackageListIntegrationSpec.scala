@@ -58,12 +58,12 @@ final class PackageListIntegrationSpec
     }
   }
 
-  private[this] def withInstalledPackage(packageName: String)(f: InstallResponse => Unit): Unit = {
-    val Xor.Right(installResponse) = apiClient.callEndpoint[InstallRequest, InstallResponse](
+  private[this] def withInstalledPackage(packageName: String)(f: InstallMarathonResponse => Unit): Unit = {
+    val Xor.Right(installResponse) = apiClient.callEndpoint[InstallMarathonRequest, InstallMarathonResponse](
       "package/install",
-      InstallRequest(packageName, appId = Some(AppId(UUID.randomUUID().toString))),
-      MediaTypes.InstallRequest,
-      MediaTypes.InstallResponse
+      InstallMarathonRequest(packageName, appId = Some(AppId(UUID.randomUUID().toString))),
+      MediaTypes.InstallMarathonRequest,
+      MediaTypes.InstallMarathonResponse
     ) withClue "when installing package"
 
     try {
@@ -116,7 +116,7 @@ final class PackageListIntegrationSpec
     }
   }
 
-  private[this] def withInstalledPackageInListResponse(installResponse: InstallResponse)(
+  private[this] def withInstalledPackageInListResponse(installResponse: InstallMarathonResponse)(
     pf: PartialFunction[Option[Installation], Unit]
   ): Unit = {
     val actualList = apiClient.callEndpoint[ListRequest, ListResponse](

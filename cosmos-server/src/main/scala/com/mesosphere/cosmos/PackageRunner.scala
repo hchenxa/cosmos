@@ -1,21 +1,15 @@
 package com.mesosphere.cosmos
 
 import com.mesosphere.cosmos.http.RequestSession
-import com.mesosphere.cosmos.model.thirdparty.marathon.MarathonApp
-import com.mesosphere.cosmos.model.thirdparty.kubernetes.KubernetesPod
 import com.twitter.util.Future
 import io.circe.Json
 
-/** The service that packages are installed to; currently defaults to Marathon in DCOS. */
-trait PackageRunner {
+trait PackageRunner[T] {
 
   /** Execute the package described by the given JSON configuration.
     *
     * @param renderedConfig the fully-specified configuration of the package to run
-    * @return The response from Marathon, if the request was successful.
+    * @return The response from Marathon/Kubernetes, if the request was successful.
     */
-  def launch(renderedConfig: Json)(implicit session: RequestSession): Future[MarathonApp]
-
-  def launch_1(renderedConfig: Json)(implicit session: RequestSession): Future[KubernetesPod]
-
+  def launch(renderedConfig: Json, option: Option[String] = None)(implicit session: RequestSession): Future[T]
 }
