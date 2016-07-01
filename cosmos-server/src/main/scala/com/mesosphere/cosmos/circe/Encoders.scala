@@ -102,6 +102,9 @@ object Encoders {
   implicit val encodeListRequest: Encoder[ListRequest] = deriveFor[ListRequest].encoder
   implicit val encodeListResponse: Encoder[ListResponse] = deriveFor[ListResponse].encoder
   implicit val encodeInstallation: Encoder[Installation] = deriveFor[Installation].encoder
+  implicit val encodeKubernetesListRequest: Encoder[KubernetesListRequest] = deriveFor[KubernetesListRequest].encoder
+  implicit val encodeKubernetesListResponse: Encoder[KubernetesListResponse] = deriveFor[KubernetesListResponse].encoder
+  implicit val encodeKubernetesInstallation: Encoder[KubernetesInstallation] = deriveFor[KubernetesInstallation].encoder  
   implicit val encodePackageInformation: Encoder[InstalledPackageInformation] = deriveFor[InstalledPackageInformation].encoder
 
 // Add Kubernetes decode implicit function

@@ -34,7 +34,7 @@ private[cosmos] final class Cosmos(
   packageSearchHandler: EndpointHandler[SearchRequest, SearchResponse],
   packageDescribeHandler: EndpointHandler[DescribeRequest, DescribeResponse],
   packageListVersionsHandler: EndpointHandler[ListVersionsRequest, ListVersionsResponse],
-  listHandler: EndpointHandler[ListRequest, ListResponse],
+  listHandler: EndpointHandler[KubernetesListRequest, KubernetesListResponse],
   listRepositoryHandler: EndpointHandler[PackageRepositoryListRequest, PackageRepositoryListResponse],
   addRepositoryHandler: EndpointHandler[PackageRepositoryAddRequest, PackageRepositoryAddResponse],
   deleteRepositoryHandler: EndpointHandler[PackageRepositoryDeleteRequest, PackageRepositoryDeleteResponse],
@@ -122,7 +122,7 @@ private[cosmos] final class Cosmos(
   }
 
   val packageList: Endpoint[Json] = {
-    def respond(t: (RequestSession, ListRequest)): Future[Output[Json]] = {
+    def respond(t: (RequestSession, KubernetesListRequest)): Future[Output[Json]] = {
       implicit val (session, request) = t
       listHandler(request).map { resp =>
         Ok(resp.asJson).withContentType(Some(listHandler.produces.show))
@@ -322,7 +322,7 @@ object Cosmos extends FinchServer {
       new PackageSearchHandler(repositories),
       new PackageDescribeHandler(repositories),
       new ListVersionsHandler(repositories),
-      new ListHandler(adminRouter, uri => repositories.getRepository(uri)),
+      new KubernetesListHandler(adminRouter, uri => repositories.getRepository(uri)),
       new PackageRepositoryListHandler(sourcesStorage),
       new PackageRepositoryAddHandler(sourcesStorage),
       new PackageRepositoryDeleteHandler(sourcesStorage),

@@ -56,6 +56,9 @@ private[cosmos] final class KubernetesInstallHandler(
                 apiVersion = svc.apiVersion
               }
             }
+
+            val logger = org.slf4j.LoggerFactory.getLogger(getClass)
+            logger.info(s"kind: $kind, apiVersion: $apiVersion")
             InstallKubernetesResponse(packageName, packageVersion, kind, apiVersion)
           }
       }

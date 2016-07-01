@@ -131,6 +131,9 @@ object Decoders {
   implicit val decodeListRequest: Decoder[ListRequest] = deriveFor[ListRequest].decoder
   implicit val decodeListResponse: Decoder[ListResponse] = deriveFor[ListResponse].decoder
   implicit val decodeInstallation: Decoder[Installation] = deriveFor[Installation].decoder
+  implicit val decodeKubernetesListRequest: Decoder[KubernetesListRequest] = deriveFor[KubernetesListRequest].decoder
+  implicit val decodeKubernetesListResponse: Decoder[KubernetesListResponse] = deriveFor[KubernetesListResponse].decoder
+  implicit val decodeKubernetesInstallation: Decoder[KubernetesInstallation] = deriveFor[KubernetesInstallation].decoder  
   implicit val decodePackageInformation: Decoder[InstalledPackageInformation] = deriveFor[InstalledPackageInformation].decoder
 
   implicit val decodeUniverseVersion: Decoder[UniverseVersion] = Decoder.decodeString.map(UniverseVersion)
