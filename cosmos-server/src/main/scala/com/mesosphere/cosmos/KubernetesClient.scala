@@ -19,7 +19,7 @@ class KubernetesClient(
 ) extends ServiceClient(kubernetesUri) {
 
   def createRC(appJson: Json, namespace: String)(implicit session: RequestSession): Future[Response] = {
-    logger.info("create pods with json file:{}", appJson)
+    logger.info("create RC with json file:{}", appJson)
     val uri = s"api/v1/namespaces/$namespace/replicationcontrollers"
     client(post(uri, appJson)).map {
       response => {
@@ -30,7 +30,7 @@ class KubernetesClient(
   }
   
   def createService(appJson: Json, namespace: String)(implicit session: RequestSession): Future[Response] = {
-    logger.info("create pods with json file:{}", appJson)
+    logger.info("create service with json file:{}", appJson)
     val uri = s"api/v1/namespaces/$namespace/services"
     client(post(uri, appJson)).map {
       response => {

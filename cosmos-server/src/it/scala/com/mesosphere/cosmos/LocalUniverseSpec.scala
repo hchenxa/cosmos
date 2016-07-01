@@ -117,7 +117,7 @@ object LocalUniverseSpec extends Matchers with TableDrivenPropertyChecks  {
     val baos = new ByteArrayOutputStream
     val zos = new ZipOutputStream(baos)
 
-    val files = List("command.json", "config.json", "marathon.json.mustache", "package.json")
+    val files = List("command.json", "config.json", "kubernetes.json.mustache", "package.json")
 
     try {
       files.foreach { file =>

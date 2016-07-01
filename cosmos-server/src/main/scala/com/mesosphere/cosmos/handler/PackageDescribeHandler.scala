@@ -22,7 +22,7 @@ private[cosmos] class PackageDescribeHandler(
       .map { packageFiles =>
         DescribeResponse(
           packageFiles.packageJson,
-          packageFiles.marathonJsonMustache,
+          packageFiles.kubernetesJsonMustache,
           packageFiles.commandJson,
           packageFiles.configJson,
           packageFiles.resourceJson

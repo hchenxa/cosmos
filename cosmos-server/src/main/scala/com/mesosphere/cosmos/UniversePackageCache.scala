@@ -50,6 +50,8 @@ final class UniversePackageCache private (
     mostRecentBundle().map { case (bundleDir, universeIndex) =>
       val repoDir = repoDirectory(bundleDir)
       val packageDir = getPackagePath(repoDir, universeIndex, packageName, packageVersion)
+      val logger = org.slf4j.LoggerFactory.getLogger(getClass)
+      logger.info(s"UniversePackageCache:getPackageByPackageVersion(), repoDir:$repoDir, packageDir:$packageDir")
       readPackageFiles(universeBundle, packageDir)
     }
   }
@@ -71,6 +73,8 @@ final class UniversePackageCache private (
   }
 
   override def search(queryOpt: Option[String]): Future[List[SearchResult]] = {
+    val logger = org.slf4j.LoggerFactory.getLogger(getClass)
+    logger.info(s"UniversePackageCache:search(), query: $queryOpt.get")
     mostRecentBundle().map { case (bundleDir, universeIndex) =>
       UniversePackageCache.search(bundleDir, universeIndex, queryOpt)
     }
@@ -97,9 +101,11 @@ final class UniversePackageCache private (
   def universeBundle: Uri = repository.uri
 
   private[this] def mostRecentBundle(): Future[(Path, UniverseIndex)] = {
+    val logger = org.slf4j.LoggerFactory.getLogger(getClass)
+    logger.info("UniversePackageCache:mostRecentBundle()")
     synchronizedUpdate().map { bundlePath =>
       val indexFile = repoDirectory(bundlePath).resolve(Paths.get("meta", "index.json"))
-
+      logger.info(s"UniversePackageCache:mostRecentBundle(), indexFile: $indexFile.toString()")
       val repoIndex = parseJsonFile(indexFile)
         .toRightXor(new IndexNotFound(universeBundle))
         .flatMap { index =>
@@ -107,6 +113,7 @@ final class UniversePackageCache private (
         }
         .valueOr(err => throw err)
 
+      logger.info(s"UniversePackageCache:mostRecentBundle(), repoIndex:$repoIndex.toString()")
       val repoVersion = repoIndex.version
       if (repoVersion.toString.startsWith("2.")) {
         (bundlePath, repoIndex)
@@ -120,8 +127,12 @@ final class UniversePackageCache private (
     updateMutex.acquireAndRun {
       // TODO: How often we check should be configurable
       if (lastModified.get().plusMinutes(1).isBefore(LocalDateTime.now())) {
+        val logger = org.slf4j.LoggerFactory.getLogger(getClass)
+        logger.info("UniversePackageCache:synchronizedUpdate()")
+        
         updateUniverseCache(repository, universeDir, universeClient)
           .onSuccess { _ => lastModified.set(LocalDateTime.now()) }
+          .onFailure { t => logger.info(s"UniversePackageCache:synchronizedUpdate(), failed to update cache due to: $t.getMessage")}
       } else {
         /* We don't need to fetch the latest package information; just return the current
          * information.
@@ -256,7 +267,10 @@ object UniversePackageCache {
     queryOpt: Option[String]
   ): List[SearchResult] = {
     val repoDir = repoDirectory(bundleDir)
-
+    
+    val logger = org.slf4j.LoggerFactory.getLogger(getClass)
+    logger.info(s"UniversePackageCache:searchIndex(), repoDir: $repoDir.toString()")
+    
     searchIndex(universeIndex.packages, queryOpt)
       .map { indexEntry =>
         val resources = packageResources(repoDir, universeIndex, indexEntry.name)
@@ -283,6 +297,8 @@ object UniversePackageCache {
     entries: List[UniverseIndexEntry],
     queryOpt: Option[String]
   ): List[UniverseIndexEntry] = {
+    val logger = org.slf4j.LoggerFactory.getLogger(getClass)
+    logger.info(s"UniversePackageCache:searchIndex()")
     queryOpt match {
       case None => entries
       case Some(query) =>
@@ -316,9 +332,12 @@ object UniversePackageCache {
     universeIndex: UniverseIndex,
     packageName: String
   ): Resource = {
+    val logger = org.slf4j.LoggerFactory.getLogger(getClass)
+    logger.info("UniversePackageCache:packageResources()")
     val packageDir = getPackagePath(repoDir, universeIndex, packageName, packageVersion = None)
+    logger.info(s"UniversePackageCache:packageResources(), packageDir: $packageDir.toString()")
     parseAndVerify[Resource](packageDir, "resource.json")
-      .valueOr(err => throw err)
+      .valueOr(err => { logger.info(s"UniversePackageCache:packageResources(), parseAndVerify err: $err.toString()"); throw err})
       .getOrElse(Resource())
   }
 
@@ -372,16 +391,15 @@ object UniversePackageCache {
   }
 
   private def readPackageFiles(universeBundle: Uri, packageDir: Path): PackageFiles = {
-
     val packageJson = parseJsonFile(
       packageDir.resolve("package.json")
     ).getOrElse {
       throw PackageFileMissing("package.json")
     }
     val mustache = readFile(
-      packageDir.resolve("marathon.json.mustache")
+      packageDir.resolve("kubernetes.json.mustache")
     ).getOrElse {
-      throw PackageFileMissing("marathon.json.mustache")
+      throw PackageFileMissing("kubernetes.json.mustache")
     }
 
     val packageDefValid = verifySchema[PackageDetails](packageJson, "package.json")

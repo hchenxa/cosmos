@@ -18,6 +18,8 @@ private[cosmos] class PackageSearchHandler(
   val produces: MediaType = MediaTypes.SearchResponse
 
   override def apply(request: SearchRequest)(implicit session: RequestSession): Future[SearchResponse] = {
+    val logger = org.slf4j.LoggerFactory.getLogger(getClass)
+    logger.info("PackageSearchHandler:apply() ")
     packageCache.search(request.query) map { packages =>
       val sortedPackages = packages.sortBy(p => (!p.selected.getOrElse(false), p.name.toLowerCase))
       SearchResponse(sortedPackages)

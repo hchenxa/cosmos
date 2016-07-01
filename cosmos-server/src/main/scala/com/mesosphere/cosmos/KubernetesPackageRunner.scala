@@ -29,21 +29,25 @@ final class KubernetesPackageRunner(adminRouter: AdminRouter) extends PackageRun
         adminRouter.createRC(rc, namespace)
           .map { response =>
             {
-              logger.info("The response in launch was: {}", response.status)
+              logger.info("the resource.contentString was: {}", response.contentString)
+              logger.info("The resource response was : {}", response)
               response.status match {
               case Status.Conflict => throw PackageAlreadyInstalled()
               case status if (400 until 500).contains(status.code) =>
                 decode[KubernetesError](response.contentString) match {
-                  case Xor.Right(kubernetesError) =>
+                  case Xor.Right(kubernetesError) => {
+                    logger.error(s"Kubernetes error: $kubernetesError.toString()")
                     throw new KubernetesBadResponse(kubernetesError)
-                  case Xor.Left(parseError) =>
+                  }
+                  case Xor.Left(parseError) => {
+                    logger.error(s"Kubernetes parseError: $parseError.toString()")
                     throw new KubernetesGenericError(status)
+                  }
                 }
-              case status if (500 until 600).contains(status.code) =>
+              case status if (500 until 600).contains(status.code) => {
                 throw KubernetesBadGateway(status)
+              }
               case _ =>{
-                logger.info("the resource.contentString was: {}", response.contentString)
-                logger.info("The resource response was : {}", response)
                 decode[KubernetesRC](response.contentString) match {
                   case Xor.Right(rcResponse) => rcResponse
                   case Xor.Left(parseError) => throw new CirceError(parseError)
@@ -59,7 +63,8 @@ final class KubernetesPackageRunner(adminRouter: AdminRouter) extends PackageRun
         adminRouter.createService(service, namespace)
           .map { response =>
             {
-              logger.info("The response in launch was: {}", response.status)
+              logger.info("the resource.contentString was: {}", response.contentString)
+              logger.info("The resource response was : {}", response)
               response.status match {
               case Status.Conflict => throw PackageAlreadyInstalled()
               case status if (400 until 500).contains(status.code) =>
@@ -72,8 +77,6 @@ final class KubernetesPackageRunner(adminRouter: AdminRouter) extends PackageRun
               case status if (500 until 600).contains(status.code) =>
                 throw KubernetesBadGateway(status)
               case _ => {
-                logger.info("the resource.contentString was: {}", response.contentString)
-                logger.info("The resource response was : {}", response)
                 decode[KubernetesService](response.contentString) match {
                   case Xor.Right(svcResponse) => svcResponse
                   case Xor.Left(parseError) => throw new CirceError(parseError)

@@ -54,7 +54,7 @@ private[cosmos] final class Cosmos(
 //  }
   
   val packageInstall: Endpoint[Json] = {
-    logger.info("Jump into packageInstall init")
+    logger.info("Jump into package install init")
     def respond(t: (RequestSession, InstallKubernetesRequest)): Future[Output[Json]] = {
       implicit val (session, request) = t
       kubernetesInstallHandler(request)
@@ -109,7 +109,7 @@ private[cosmos] final class Cosmos(
   }
 
   val packageSearch: Endpoint[Json] = {
-
+    logger.info("Jump into package search init")
     def respond(t: (RequestSession, SearchRequest)): Future[Output[Json]] = {
       implicit val (session, request) = t
       packageSearchHandler(request)
