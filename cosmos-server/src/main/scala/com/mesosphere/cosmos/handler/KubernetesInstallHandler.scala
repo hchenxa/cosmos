@@ -38,7 +38,7 @@ private[cosmos] final class KubernetesInstallHandler(
       .flatMap { packageFiles =>
         val packageConfig = preparePackageConfig(request.options, packageFiles)
         packageRunner
-          .launch(packageConfig)
+          .launch(packageConfig, request.namespace)
           .map { runnerResponse =>
             val packageName = packageFiles.packageJson.name
             val packageVersion = packageFiles.packageJson.version

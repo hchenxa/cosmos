@@ -15,12 +15,12 @@ final class KubernetesPackageRunner(adminRouter: AdminRouter) extends PackageRun
 
   val logger = org.slf4j.LoggerFactory.getLogger(getClass)
   
-  def launch(renderedConfig: Json, option: Option[String] = None)(implicit session: RequestSession): Future[KubernetesService] = {
+  def launch(renderedConfig: Json, ns: Option[String] = None)(implicit session: RequestSession): Future[KubernetesService] = {
     logger.info("The request json is: {}", renderedConfig)
     
     import KubernetesPackageRunner._
     
-    val namespace = option.getOrElse("default")
+    val namespace = ns.getOrElse("default")
     val (rcs, services) = getKubernetesObjects(renderedConfig)
     
     if (!rcs.isEmpty && !services.isEmpty) {

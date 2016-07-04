@@ -391,16 +391,26 @@ object UniversePackageCache {
   }
 
   private def readPackageFiles(universeBundle: Uri, packageDir: Path): PackageFiles = {
+    val logger = org.slf4j.LoggerFactory.getLogger(getClass)
+    logger.info("readPackageFiles(), start point")
+
     val packageJson = parseJsonFile(
       packageDir.resolve("package.json")
     ).getOrElse {
       throw PackageFileMissing("package.json")
     }
+
+    logger.info("readPackageFiles(), packageJson: {}", packageJson)
+
+    val mustacheDir = packageDir.resolve("kubernetes.json.mustache")
+    logger.info(s"readPackageFiles(), mustache dir: $mustacheDir.toString()")
     val mustache = readFile(
       packageDir.resolve("kubernetes.json.mustache")
     ).getOrElse {
       throw PackageFileMissing("kubernetes.json.mustache")
     }
+
+    logger.info("readPackageFiles(), mustache: {}", mustache)
 
     val packageDefValid = verifySchema[PackageDetails](packageJson, "package.json")
     val resourceDefValid = parseAndVerify[Resource](packageDir, "resource.json").toValidated.toValidatedNel
@@ -411,6 +421,11 @@ object UniversePackageCache {
           .asObject
           .toValidNel[CosmosError](PackageFileSchemaMismatch("config.json", DecodingFailure("Object", List())))
       }
+
+    logger.info(s"readPackageFiles(), packageDefValid: $packageDefValid.toString()")
+    logger.info(s"readPackageFiles(), resourceDefValid: $resourceDefValid.toString()")
+    logger.info(s"readPackageFiles(), commandJsonValid: $commandJsonValid.toString()")
+    logger.info(s"readPackageFiles(), configJsonObject: $configJsonObject.toString()")
 
     (packageDefValid |@| resourceDefValid |@| commandJsonValid |@| configJsonObject)
       .map { (packageDef, resourceDef, commandJson, configJson) =>
@@ -445,6 +460,8 @@ object UniversePackageCache {
       } catch {
         case e: Throwable =>
           // TODO: This is not the correct error. We return None if the file doesn't exists.
+          val logger = org.slf4j.LoggerFactory.getLogger(getClass)
+          logger.info(s"readFile(), err: $e.messgae")
           throw new PackageFileMissing(path.toString, e)
       }
     } else {

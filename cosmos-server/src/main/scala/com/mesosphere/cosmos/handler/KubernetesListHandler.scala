@@ -32,10 +32,11 @@ final class KubernetesListHandler(
     adminRouter.listServices().flatMap { svcs =>
       Future.collect {
         svcs.items.map { svc =>
+          logger.info(s"Get Kubernetes svc: $svc.toString()")
           (svc.packageReleaseVersion, svc.packageName, svc.packageRepository) match {
             case (Some(releaseVersion), Some(packageName), Some(repositoryUri))
               if request.packageName.forall(_ == packageName) && request.service.forall(_ == svc.metadata.name) && request.namespace.forall(_ == svc.metadata.namespace) =>
-                logger.info(s"Get request Kubernetes service: $svc.metadata.name")
+                logger.info(s"Get requested Kubernetes service: $svc.metadata.name")
                 
                 installedPackageInformation(packageName, releaseVersion, repositoryUri)
                   .map {
