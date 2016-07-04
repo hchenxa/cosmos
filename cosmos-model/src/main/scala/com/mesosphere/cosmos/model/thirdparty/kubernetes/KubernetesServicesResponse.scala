@@ -1,5 +1,8 @@
 package com.mesosphere.cosmos.model.thirdparty.kubernetes
 
 case class KubernetesServicesResponse (
-  services: List[KubernetesService]
+  apiVersion: String,
+  kind: String,
+  metadata: Map[String, String],
+  items: List[KubernetesService]
 )

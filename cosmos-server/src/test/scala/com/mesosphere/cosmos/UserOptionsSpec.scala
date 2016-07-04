@@ -66,7 +66,7 @@ final class UserOptionsSpec extends UnitSpec {
             DescribeResponse(packageFiles.packageJson, packageFiles.marathonJsonMustache)
           ),
           EndpointHandler.const(ListVersionsResponse(Map.empty)),
-          EndpointHandler.const(ListResponse(Nil)),
+          EndpointHandler.const(KubernetesListResponse(Nil)),
           EndpointHandler.const(PackageRepositoryListResponse(Nil)),
           EndpointHandler.const(PackageRepositoryAddResponse(Nil)),
           EndpointHandler.const(PackageRepositoryDeleteResponse(Nil)),

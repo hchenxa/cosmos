@@ -2,8 +2,6 @@ package com.mesosphere.cosmos
 
 import com.mesosphere.cosmos.circe.Decoders._
 import com.mesosphere.cosmos.http.RequestSession
-import com.mesosphere.cosmos.model.AppId
-import com.mesosphere.cosmos.model.thirdparty.marathon.{MarathonAppResponse, MarathonAppsResponse}
 import com.mesosphere.cosmos.model.thirdparty.kubernetes._
 import com.netaporter.uri.Uri
 import com.netaporter.uri.dsl._
@@ -63,12 +61,12 @@ class KubernetesClient(
   }
     
   def listRCs()(implicit session: RequestSession): Future[KubernetesRCsResponse] = {
-    val uri = s"api/v1/replicationcontrollers"
+    val uri = "api/v1/replicationcontrollers"
     client(get(uri)).flatMap(decodeTo[KubernetesRCsResponse](HttpMethod.GET, uri, _))
   }
   
   def listServices()(implicit session: RequestSession): Future[KubernetesServicesResponse] = {
-    val uri = s"api/v1/services"
+    val uri = "api/v1/services"
     client(get(uri)).flatMap(decodeTo[KubernetesServicesResponse](HttpMethod.GET, uri, _))
   }
 

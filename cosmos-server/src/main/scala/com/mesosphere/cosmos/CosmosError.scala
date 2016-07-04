@@ -92,6 +92,7 @@ case class KubernetesRCNotFound(rc: String) extends CosmosError
 case class KubernetesServiceDeleteError(service: String) extends CosmosError
 case class KubernetesServiceNotFound(service: String) extends CosmosError
 case class kubernetesInvalidPackageError(message: String)  extends CosmosError
+case class kubernetesGetPackageDetailError(message: String)  extends CosmosError
 
 case class CirceError(cerr: io.circe.Error) extends CosmosError
 

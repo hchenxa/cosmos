@@ -21,7 +21,7 @@ import com.mesosphere.universe.{PackageFiles, Resource}
 
 private[cosmos] final class KubernetesInstallHandler(
   packageCache: PackageCollection,
-  packageRunner: PackageRunner[KubernetesObject]
+  packageRunner: PackageRunner[KubernetesService]
 )(implicit
   bodyDecoder: DecodeRequest[InstallKubernetesRequest],
   encoder: Encoder[InstallKubernetesResponse]
@@ -42,24 +42,8 @@ private[cosmos] final class KubernetesInstallHandler(
           .map { runnerResponse =>
             val packageName = packageFiles.packageJson.name
             val packageVersion = packageFiles.packageJson.version
-            
-            var kind: String = ""
-            var apiVersion: String = ""
-            
-            runnerResponse match {
-              case rc: KubernetesRC => {
-                kind = rc.kind
-                apiVersion = rc.apiVersion
-              }
-              case svc: KubernetesService => {
-                kind = svc.kind
-                apiVersion = svc.apiVersion
-              }
-            }
 
-            val logger = org.slf4j.LoggerFactory.getLogger(getClass)
-            logger.info(s"kind: $kind, apiVersion: $apiVersion")
-            InstallKubernetesResponse(packageName, packageVersion, kind, apiVersion)
+            InstallKubernetesResponse(packageName, packageVersion, "Service", "v1")
           }
       }
   }

@@ -3,10 +3,8 @@ package com.mesosphere.cosmos.handler
 import java.nio.charset.StandardCharsets
 import java.util.Base64
 import cats.data.Xor
-import com.mesosphere.cosmos.circe.Decoders._
-import com.mesosphere.cosmos.{AdminRouter, CirceError}
+import com.mesosphere.cosmos._
 import com.mesosphere.cosmos.http.{MediaTypes, RequestSession}
-import com.mesosphere.cosmos.model.thirdparty.kubernetes._
 import com.mesosphere.cosmos.model.{KubernetesInstallation, InstalledPackageInformation, KubernetesListRequest, KubernetesListResponse}
 import com.mesosphere.cosmos.repository.Repository
 import com.mesosphere.universe.{PackageDetails, ReleaseVersion}
@@ -14,7 +12,6 @@ import com.netaporter.uri.Uri
 import com.netaporter.uri.dsl.stringToUri
 import com.twitter.util.Future
 import io.circe.Encoder
-import io.circe.parse._
 import io.finch.DecodeRequest
 
 final class KubernetesListHandler(
@@ -34,7 +31,7 @@ final class KubernetesListHandler(
 
     adminRouter.listServices().flatMap { svcs =>
       Future.collect {
-        svcs.services.map { svc =>
+        svcs.items.map { svc =>
           (svc.packageReleaseVersion, svc.packageName, svc.packageRepository) match {
             case (Some(releaseVersion), Some(packageName), Some(repositoryUri))
               if request.packageName.forall(_ == packageName) && request.service.forall(_ == svc.metadata.name) && request.namespace.forall(_ == svc.metadata.namespace) =>
@@ -43,18 +40,7 @@ final class KubernetesListHandler(
                 installedPackageInformation(packageName, releaseVersion, repositoryUri)
                   .map {
                     case Some(resolvedFromRepo) => resolvedFromRepo
-                    case None =>
-                      val b64PkgInfo = svc.metadata.labels(KubernetesService.metadataLabel)
-                      val pkgInfoBytes = Base64.getDecoder.decode(b64PkgInfo)
-                      val pkgInfoString = new String(pkgInfoBytes, StandardCharsets.UTF_8)
-
-                      decode[PackageDetails](pkgInfoString) match {
-                        case Xor.Left(err) => {
-                          logger.error(s"Decode packageDetail error: $err.toString()")
-                          throw new CirceError(err)
-                        }
-                        case Xor.Right(pkgDetails) => InstalledPackageInformation(pkgDetails)
-                      }
+                    case None => throw new kubernetesGetPackageDetailError(s"Failed to get package information of $packageName")
                   }
                 .map(packageInformation => Some(KubernetesInstallation(svc.metadata.name, svc.metadata.namespace, packageInformation)))
             case _ =>

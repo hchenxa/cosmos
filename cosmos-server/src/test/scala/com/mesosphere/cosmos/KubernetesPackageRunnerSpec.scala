@@ -85,7 +85,7 @@ class KubernetesPackageRunnerSpec extends FreeSpec with Matchers with TableDrive
         |}
       """.stripMargin
 
-      val logger = LoggerFactory.getLogger("com.mesosphere.cosmos.test.CosmosIntegrationTestClient.CosmosClient")
+      val logger = LoggerFactory.getLogger("com.mesosphere.cosmos.KubernetesPackageRunnerSpec")
 
     try {
       val kubeObj = parse(kubePackage) match {

@@ -1,11 +1,11 @@
 package com.mesosphere.cosmos.model.thirdparty.kubernetes
 
 case class KubernetesRC(
-  apiVersion: String,
-  kind: String,
+  kind: Option[String],
+  apiVersion: Option[String],
   metadata: KubernetesRCMetadata,
   spec: KubernetesRCSpec
-) extends KubernetesObject (apiVersion, kind)
+)
 
 case class KubernetesRCMetadata(
   name: String,
@@ -18,8 +18,8 @@ case class KubernetesRCMetadata(
 
 case class KubernetesRCSpec(
   replicas: Int,
-  selector: Map[String, String]
-  
+  selector: Map[String, String],
+  template: KubernetesRCTemplate
 )
 
 case class KubernetesRCTemplate(
@@ -28,7 +28,7 @@ case class KubernetesRCTemplate(
 )
 
 case class KubernetesRCTemplateMetadata(
-  creationTimestamp: String,
+  name: Option[String],
   labels: Map[String, String]
 )
 
@@ -37,16 +37,23 @@ case class KubernetesRCTemplateSpec(
   restartPolicy: String,
   terminationGracePeriodSeconds: Int,
   dnsPolicy: String,
-  securityContext: Map[String, String]
+  securityContext: Option[Map[String, String]]
 )
 
 case class KubernetesRCTemplateContainer(
   name: String,
   image: String,
-  command: List[String],
-  resources: Map[String, String],
-  terminationMessagePath: String,
-  imagePullPolicy: String
+//  command: Option[List[String]],
+//  resources: Option[KubernetesContainerResource],
+//  volumeMounts: ,
+//  env: ,
+  terminationMessagePath: String
+//  imagePullPolicy: String
+//  securityContext: Option[Map[String, String]]
+)
+
+case class KubernetesContainerResource(
+  requests: Map[String, String]
 )
 
 case class KubernetesRCStatus(

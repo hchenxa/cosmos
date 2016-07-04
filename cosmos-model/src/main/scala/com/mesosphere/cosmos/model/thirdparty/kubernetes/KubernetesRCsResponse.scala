@@ -1,5 +1,8 @@
 package com.mesosphere.cosmos.model.thirdparty.kubernetes
 
 case class KubernetesRCsResponse (
-  rcs: List[KubernetesRC]
+  apiVersion: String,
+  kind: String,
+  metadata: Map[String, String],
+  items:  List[KubernetesRC]
 )

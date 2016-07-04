@@ -122,6 +122,7 @@ object Encoders {
   implicit val encodeKubernetesRCTemplate: Encoder[KubernetesRCTemplate] = deriveFor[KubernetesRCTemplate].encoder
   implicit val encodeKubernetesRCTemplateMetadata: Encoder[KubernetesRCTemplateMetadata] = deriveFor[KubernetesRCTemplateMetadata].encoder
   implicit val encodeKubernetesRCTemplateSpec: Encoder[KubernetesRCTemplateSpec] = deriveFor[KubernetesRCTemplateSpec].encoder
+  implicit val encodeKubernetesContainerResource: Encoder[KubernetesContainerResource] = deriveFor[KubernetesContainerResource].encoder
   implicit val encodeKubernetesRCTemplateContainer: Encoder[KubernetesRCTemplateContainer] = deriveFor[KubernetesRCTemplateContainer].encoder
   implicit val encodeKubernetesRCStatus: Encoder[KubernetesRCStatus] = deriveFor[KubernetesRCStatus].encoder
   implicit val encodeInstallKubernetesRequest: Encoder[InstallKubernetesRequest] = deriveFor[InstallKubernetesRequest].encoder

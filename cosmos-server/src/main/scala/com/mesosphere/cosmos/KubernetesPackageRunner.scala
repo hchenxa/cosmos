@@ -11,11 +11,11 @@ import io.circe.{Json, HCursor}
 import scala.collection.mutable.ListBuffer
 
 /** A [[com.mesosphere.cosmos.PackageRunner]] implementation for Kubernetes. */
-final class KubernetesPackageRunner(adminRouter: AdminRouter) extends PackageRunner[KubernetesObject] {
+final class KubernetesPackageRunner(adminRouter: AdminRouter) extends PackageRunner[KubernetesService] {
 
   val logger = org.slf4j.LoggerFactory.getLogger(getClass)
   
-  def launch(renderedConfig: Json, option: Option[String] = None)(implicit session: RequestSession): Future[KubernetesObject] = {
+  def launch(renderedConfig: Json, option: Option[String] = None)(implicit session: RequestSession): Future[KubernetesService] = {
     logger.info("The request json is: {}", renderedConfig)
     
     import KubernetesPackageRunner._

@@ -21,7 +21,7 @@ import com.mesosphere.cosmos.circe.Encoders._
 import com.mesosphere.cosmos.handler._
 import com.mesosphere.cosmos.http.{MediaTypes, RequestSession}
 import com.mesosphere.cosmos.model._
-import com.mesosphere.cosmos.model.thirdparty.kubernetes.KubernetesObject
+import com.mesosphere.cosmos.model.thirdparty.kubernetes.KubernetesService
 import com.mesosphere.cosmos.repository.PackageSourcesStorage
 import com.mesosphere.cosmos.repository.UniverseClient
 import com.mesosphere.cosmos.repository.ZooKeeperStorage
@@ -122,6 +122,7 @@ private[cosmos] final class Cosmos(
   }
 
   val packageList: Endpoint[Json] = {
+    logger.info("Jump into package list init")
     def respond(t: (RequestSession, KubernetesListRequest)): Future[Output[Json]] = {
       implicit val (session, request) = t
       listHandler(request).map { resp =>
@@ -306,7 +307,7 @@ object Cosmos extends FinchServer {
 
   private[cosmos] def apply(
     adminRouter: AdminRouter,
-    packageRunner: PackageRunner[KubernetesObject],
+    packageRunner: PackageRunner[KubernetesService],
     sourcesStorage: PackageSourcesStorage,
     universeClient: UniverseClient,
     dataDir: Path

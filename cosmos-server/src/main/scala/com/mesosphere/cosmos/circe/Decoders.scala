@@ -93,6 +93,7 @@ object Decoders {
   implicit val decodeKubernetesRCsResponse: Decoder[KubernetesRCsResponse] = deriveFor[KubernetesRCsResponse].decoder
   implicit val decodeKubernetesRCMedadata: Decoder[KubernetesRCMetadata] = deriveFor[KubernetesRCMetadata].decoder
   implicit val decodeKubernetesRCTemplateMetadata: Decoder[KubernetesRCTemplateMetadata] = deriveFor[KubernetesRCTemplateMetadata].decoder
+  implicit val decodeKubernetesContainerResource: Decoder[KubernetesContainerResource] = deriveFor[KubernetesContainerResource].decoder  
   implicit val decodeKubernetesRCTemplateContainer: Decoder[KubernetesRCTemplateContainer] = deriveFor[KubernetesRCTemplateContainer].decoder
   implicit val decodeKubernetesRCTemplateSpec: Decoder[KubernetesRCTemplateSpec] = deriveFor[KubernetesRCTemplateSpec].decoder
   implicit val decodeKubernetesRCTemplate: Decoder[KubernetesRCTemplate] = deriveFor[KubernetesRCTemplate].decoder

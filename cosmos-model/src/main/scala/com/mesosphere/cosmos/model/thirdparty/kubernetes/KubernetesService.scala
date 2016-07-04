@@ -3,18 +3,38 @@ package com.mesosphere.cosmos.model.thirdparty.kubernetes
 import com.mesosphere.universe.{ReleaseVersion, PackageDetailsVersion}
 
 case class KubernetesService(
-  apiVersion: String,
-  kind: String,
+  kind: Option[String],
+  apiVersion: Option[String],
   metadata: KubernetesServiceMetadata,
   spec: KubernetesServiceSpec
-) extends KubernetesObject (apiVersion, kind) {
-  def packageName: Option[String] = metadata.labels.get(KubernetesService.nameLabel)
+) {
+  def packageName: Option[String] = {
+    metadata.labels match {
+      case Some(labelMap) => labelMap.get(KubernetesService.nameLabel)
+      case None => None
+    }
+  }
 
-  def packageReleaseVersion: Option[ReleaseVersion] = metadata.labels.get(KubernetesService.releaseLabel).map(ReleaseVersion)
+  def packageReleaseVersion: Option[ReleaseVersion] = {
+    metadata.labels match {
+      case Some(labelMap) => labelMap.get(KubernetesService.releaseLabel).map(ReleaseVersion)
+      case None => None
+    }
+  }
 
-  def packageVersion: Option[PackageDetailsVersion] = metadata.labels.get(KubernetesService.versionLabel).map(PackageDetailsVersion)
+  def packageVersion: Option[PackageDetailsVersion] = {
+    metadata.labels match {
+      case Some(labelMap) => labelMap.get(KubernetesService.versionLabel).map(PackageDetailsVersion)
+      case None => None
+    }    
+  }
 
-  def packageRepository: Option[String] = metadata.labels.get(KubernetesService.repositoryLabel)
+  def packageRepository: Option[String] = {
+    metadata.labels match {
+      case Some(labelMap) => labelMap.get(KubernetesService.repositoryLabel)
+      case None => None
+    }
+  }
 }
 
 case class KubernetesServiceMetadata(
@@ -23,17 +43,17 @@ case class KubernetesServiceMetadata(
   selfLink: String,
   uid: String,
   creationTimestamp: String,
-  labels: Map[String, String]
+  labels: Option[Map[String, String]]
 )
 
 case class KubernetesServiceSpec(
   ports: List[KubernetesServicePorts],
-  selector: Map[String, String],
-  clusterIP: String,
-  sessionAffinity: String
+  selector: Option[Map[String, String]],
+  clusterIP: String
 )
 
 case class KubernetesServicePorts(
+  name: Option[String],
   protocol: String,
   port: Int,
   targetPort: Int
